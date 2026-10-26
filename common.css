@@ -192,9 +192,7 @@ button.icon:disabled { opacity: 0.35; cursor: default; }
 @keyframes flicker { 0%, 100% { transform: scale(1, 1) skewX(0deg); } 25% { transform: scale(0.96, 1.06) skewX(-2deg); } 50% { transform: scale(1.03, 0.97) skewX(1.5deg); } 75% { transform: scale(0.98, 1.04) skewX(-1deg); } }
 @keyframes flicker-in { 0%, 100% { transform: scale(1); opacity: 1; } 40% { transform: scale(0.9, 1.12); opacity: 0.85; } 70% { transform: scale(1.05, 0.94); opacity: 1; } }
 .pick select option { color: var(--ink); background: var(--panel); font-weight: 400; }
-.pick select option.fire-option { color: #b8461a; font-weight: 600; }
-@media (prefers-color-scheme: dark) { .pick select option.fire-option { color: #ff9a52; } }
-.pick.fire select { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: elements 10s ease-in-out infinite; }
+@media (prefers-color-scheme: dark) { .pick.fire select { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: elements 10s ease-in-out infinite; }
 @media (prefers-color-scheme: dark) { .pick.fire select { --c1: #d9a35c; --c2: #4cc3d4; --c3: #ff8a2a; --c4: #c9d3de; --c5: #9d8fff; } }
 @keyframes elements {
   0%, 100% { color: var(--c1); border-color: var(--c1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c1) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c1) 40%, transparent); }

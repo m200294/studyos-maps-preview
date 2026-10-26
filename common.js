@@ -52,7 +52,8 @@
     const ps = bar.querySelector("#pick-subject");
     for (const s of slugs) {
       const option = new Option(window.MAPS[s].subject, s, false, s === slug);
-      if (s === "five-rings") option.className = "fire-option";
+      // The current subject shows in the closed menu but is left out of the open list.
+      if (s === slug) option.hidden = true;
       ps.add(option);
     }
     if (slug === "five-rings") {
