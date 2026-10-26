@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markmap map</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  #mm { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); display: block; }
+  .map { overflow: hidden; }
+  .markmap-foreign { color: var(--ink); }
+  .markmap-foreign div { color: var(--ink); }
+  .markmap-node circle { --markmap-circle-open-bg: var(--panel); }
+  .markmap-foreign small { color: var(--muted); font-size: 0.8em; display: block; }
+  .markmap-foreign span[data-id] { cursor: pointer; }
+  .markmap-foreign span[data-id]:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="map">
+    <div class="tools"><button id="fit">Fit to screen</button><button id="all">Expand all</button><button id="reset">Collapse</button></div>
+    <svg id="mm"></svg>
+  </main>
+  <aside class="chat"></aside>
+</div>
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script src="vendor/d3-7.9.0.min.js"></script>
+<script src="vendor/markmap-lib.js"></script>
+<script src="vendor/markmap-view.js"></script>
+<script>
+  MapPage.header("Markmap");
+  const t = MapPage.topic();
+  const byId = new Map();
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  function toMarkmap(n, depth) {
+    byId.set(String(n.id), n);
+    let html = `<span data-id="${n.id}">${esc(n.name)}</span>`;
+    if (n.line) html += `<small>${esc(n.line)}</small>`;
+    return { content: html, children: n.children.map((c) => toMarkmap(c, depth + 1)), payload: { fold: depth >= 2 && n.children.length ? 1 : 0 } };
+  }
+  let mm;
+  let renderVersion = 0;
+  async function render() {
+    const version = ++renderVersion;
+    if (mm) mm.destroy();
+    document.getElementById("mm").innerHTML = "";
+    const root = toMarkmap(t, 0);
+    mm = markmap.Markmap.create("#mm", { maxWidth: 280, spacingHorizontal: 40, spacingVertical: 10, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 250, fitRatio: 0.95, maxInitialScale: 1 });
+    await mm.setData(root);
+    if (version === renderVersion) await mm.fit();
+  }
+  const surface = document.getElementById("mm");
+  function controls() {
+    surface.querySelectorAll("[data-id]").forEach((el) => MapPage.accessible(el, byId.get(el.dataset.id).name));
+    surface.querySelectorAll("g.markmap-node > circle").forEach((el) => {
+      const data = el.__data__;
+      MapPage.accessible(el, "Fold or unfold " + el.parentNode.querySelector("[data-id]").textContent);
+      el.setAttribute("aria-expanded", String(!data.payload.fold));
+    });
+  }
+  new MutationObserver(controls).observe(surface, { childList: true, subtree: true });
+  surface.addEventListener("click", () => requestAnimationFrame(controls));
+  render();
+  document.fonts.ready.then(() => { if (mm) mm.fit(); });
+  new ResizeObserver(() => { if (mm) mm.fit(); }).observe(surface);
+  document.getElementById("mm").addEventListener("click", (e) => {
+    const el = e.target.closest("[data-id]");
+    if (el) MapPage.ask(byId.get(el.dataset.id));
+  });
+  MapPage.zoomControls(() => mm.svg.call(mm.zoom.scaleBy, 1.25), () => mm.svg.call(mm.zoom.scaleBy, .8));
+  document.getElementById("fit").onclick = () => mm.fit();
+  document.getElementById("reset").onclick = render;
+  document.getElementById("all").onclick = async () => {
+    (function walk(n) { n.payload = { ...n.payload, fold: 0 }; (n.children || []).forEach(walk); })(mm.state.data);
+    await mm.renderData();
+    await mm.fit();
+  };
+</script>
+</body>
+</html>

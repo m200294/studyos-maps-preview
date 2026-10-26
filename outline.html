@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outline map</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .map { padding: 24px 28px 60px; }
+  .topic-head { margin: 0 0 6px; font-family: var(--display); font-size: 28px; line-height: 1.15; color: var(--topic); cursor: pointer; }
+  .topic-line { margin: 0 0 20px; color: var(--muted); max-width: 70ch; }
+  ul { list-style: none; margin: 0; padding-left: 22px; border-left: 1px solid var(--line); }
+  ul.root { border-left: 0; padding-left: 0; }
+  li { margin: 2px 0; }
+  .row { display: flex; gap: 8px; align-items: baseline; padding: 3px 6px; border-radius: 6px; cursor: pointer; }
+  .row:hover { background: var(--accent-soft); }
+  .twist { width: 18px; flex: none; color: var(--accent); font-size: 15px; user-select: none; }
+  .sub > .row .name { font-weight: 600; color: var(--sub); font-size: 16px; }
+  .sub { margin: 10px 0; }
+  .line { display: block; color: var(--muted); font-size: 13px; margin: 0 0 4px 28px; max-width: 70ch; }
+  .concept > .row .name { color: var(--ink); }
+  .detail > .row .name { color: var(--detail); font-size: 14px; }
+  .count { color: var(--muted); font-size: 12px; }
+  li.closed > ul { display: none; }
+  .tools { position: static; display: inline-flex; margin-bottom: 18px; box-shadow: none; }
+  .twist { display: inline-grid; place-items: center; height: 18px; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+  li.closed > .row .twist { transform: rotate(-90deg); }
+  .twist:empty { visibility: hidden; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="map" id="map"></main>
+  <aside class="chat"></aside>
+</div>
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script>
+  MapPage.header("Outline");
+  const t = MapPage.topic();
+  const map = document.getElementById("map");
+  map.innerHTML = `<div class="tools"><button id="open-all">Expand all</button><button id="close-all">Collapse</button></div>`;
+  const h = document.createElement("h1");
+  h.className = "topic-head";
+  const title = document.createElement("button");
+  title.className = "node-title";
+  title.textContent = t.name;
+  h.append(title);
+  h.onclick = () => MapPage.ask(t);
+  map.append(h);
+  if (t.line) {
+    const p = document.createElement("p");
+    p.className = "topic-line";
+    p.textContent = t.line;
+    map.append(p);
+  }
+  function item(n) {
+    const li = document.createElement("li");
+    li.className = n.kind === "subtopic" ? "sub" : n.kind;
+    const row = document.createElement("div");
+    row.className = "row";
+    const tw = document.createElement("span");
+    tw.className = "twist";
+    if (n.children.length) tw.innerHTML = MapPage.ICON.chevron;
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = n.name;
+    row.append(tw, name);
+    if (n.children.length && n.kind !== "subtopic") {
+      const c = document.createElement("span");
+      c.className = "count";
+      c.textContent = `${n.children.length}`;
+      row.append(c);
+    }
+    MapPage.accessible(name, n.name);
+    row.dataset.nodeId = n.id;
+    li.append(row);
+    if (n.line) {
+      const l = document.createElement("span");
+      l.className = "line";
+      l.textContent = n.line;
+      li.append(l);
+    }
+    if (n.children.length) {
+      MapPage.accessible(tw, "Fold or unfold " + n.name);
+      tw.setAttribute("aria-expanded", n.kind === "concept" ? "false" : "true");
+      tw.onclick = (e) => { e.stopPropagation(); toggle(li); };
+    }
+    row.onclick = () => MapPage.ask(n);
+    if (n.children.length) {
+      const ul = document.createElement("ul");
+      n.children.forEach((c) => ul.append(item(c)));
+      li.append(ul);
+      if (n.kind === "concept") li.classList.add("closed");
+    }
+    return li;
+  }
+  function toggle(li) {
+    li.classList.toggle("closed");
+    li.querySelector(":scope > .row > .twist").setAttribute("aria-expanded", String(!li.classList.contains("closed")));
+  }
+  const root = document.createElement("ul");
+  root.className = "root";
+  t.children.forEach((c) => root.append(item(c)));
+  map.append(root);
+  const setAll = (closed) => map.querySelectorAll("li").forEach((li) => {
+    if (!li.querySelector(":scope > ul")) return;
+    const hide = closed && li.classList.contains("concept");
+    li.classList.toggle("closed", hide);
+    li.querySelector(":scope > .row > .twist").setAttribute("aria-expanded", String(!hide));
+  });
+  document.getElementById("open-all").onclick = () => setAll(false);
+  document.getElementById("close-all").onclick = () => setAll(true);
+</script>
+</body>
+</html>

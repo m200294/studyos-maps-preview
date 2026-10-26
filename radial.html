@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radial map</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .map { overflow: hidden; }
+  #svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; }
+  .link { fill: none; stroke: var(--line); stroke-width: 1.5; }
+  .link.sub { stroke: var(--sub); opacity: 0.55; }
+  @media (prefers-color-scheme: dark) { .link:not(.sub) { stroke: var(--muted); opacity: .65; } }
+  .hit { cursor: pointer; }
+  .topic-box { fill: var(--topic); }
+  .topic-text { fill: #fff; font-weight: 600; font-size: 15px; }
+  @media (prefers-color-scheme: dark) { .topic-text { fill: #10201f; } }
+  .sub-box { fill: var(--sub-soft); stroke: var(--sub); }
+  .sub-text { fill: var(--ink); font-weight: 600; font-size: 13px; }
+  .dot { fill: var(--accent); }
+  .dot.has { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
+  .concept-text { fill: var(--ink); font-size: 12.5px; }
+  .detail-text { fill: var(--detail); font-size: 11.5px; }
+  .hit:hover text { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="map" id="map">
+    <div class="tools"><button id="fit">Fit to screen</button><button id="all">Expand all</button><button id="reset">Collapse</button></div>
+    <svg id="svg"><g id="view"></g></svg>
+  </main>
+  <aside class="chat"></aside>
+</div>
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script src="vendor/d3-7.9.0.min.js"></script>
+<script>
+  MapPage.header("Radial");
+  const t = MapPage.topic();
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("svg");
+  const view = document.getElementById("view");
+  const open = new Set();
+  let zoom = { x: 0, y: 0, k: 1 };
+
+  function el(name, attrs, parent) {
+    const e = document.createElementNS(NS, name);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    parent.append(e);
+    return e;
+  }
+  function wrap(text, width) {
+    const words = text.split(" "), lines = [];
+    let line = "";
+    for (const w of words) {
+      if ((line + " " + w).trim().length > width && line) { lines.push(line); line = w; } else line = (line + " " + w).trim();
+    }
+    lines.push(line);
+    return lines;
+  }
+  function label(parent, x, y, text, cls, width, anchor = "middle") {
+    const lines = wrap(text, width);
+    const tx = el("text", { x, y: y - (lines.length - 1) * 8, class: cls, "text-anchor": anchor, "dominant-baseline": "middle" }, parent);
+    lines.forEach((l, i) => { const s = el("tspan", { x, dy: i ? 16 : 0 }, tx); s.textContent = l; });
+    return tx;
+  }
+  function polar(r, a) { return [r * Math.cos(a), r * Math.sin(a)]; }
+
+  function draw() {
+    view.innerHTML = "";
+    const subs = t.children;
+    const weight = (s) => Math.max(1, s.children.reduce((n, c) => n + 1 + (open.has(c.id) ? c.children.length * 0.6 : 0), 0));
+    const total = subs.reduce((n, s) => n + weight(s), 0);
+    const concepts = subs.reduce((n, s) => n + s.children.length, 0);
+    const R1 = Math.max(190, subs.length * 42), R2 = Math.max(R1 + 190, concepts * 13), R3 = R2 + 190;
+    const links = el("g", {}, view), nodes = el("g", {}, view);
+    let a0 = -Math.PI / 2;
+    for (const s of subs) {
+      const span = (weight(s) / total) * 2 * Math.PI;
+      const mid = a0 + span / 2;
+      const [sx, sy] = polar(R1, mid);
+      el("path", { class: "link sub", d: `M0,0 Q${sx * 0.5},${sy * 0.5} ${sx},${sy}` }, links);
+      // concepts spread across this subtopic's sector
+      const units = s.children.map((c) => 1 + (open.has(c.id) ? c.children.length * 0.6 : 0));
+      const usum = units.reduce((a, b) => a + b, 0) || 1;
+      let ca = a0;
+      s.children.forEach((c, i) => {
+        const cspan = (units[i] / usum) * span, cm = ca + cspan / 2;
+        ca += cspan;
+        const [cx, cy] = polar(R2, cm);
+        el("path", { class: "link", d: `M${sx},${sy} Q${polar((R1 + R2) / 2, cm).join(",")} ${cx},${cy}` }, links);
+        const g = el("g", { class: "hit" }, nodes);
+        const right = Math.cos(cm) >= 0, steep = Math.abs(Math.cos(cm)) < 0.3;
+        el("circle", { cx, cy, r: 5, class: "dot" + (c.children.length ? " has" : "") }, g);
+        if (c.children.length) {
+          const dot = g.querySelector("circle");
+          MapPage.accessible(dot, "Fold or unfold " + c.name);
+          dot.setAttribute("aria-expanded", String(open.has(c.id)));
+          dot.dataset.branchId = c.id;
+        }
+        if (steep) { const off = wrap(c.name, 18).length * 8 + 10; label(g, cx, cy + (Math.sin(cm) < 0 ? -off : off), c.name, "concept-text", 18, "middle"); }
+        else label(g, cx + (right ? 10 : -10), cy, c.name, "concept-text", 26, right ? "start" : "end");
+        MapPage.accessible(g, c.name);
+        g.onclick = (e) => {
+          e.stopPropagation();
+          if (c.children.length && e.target.tagName === "circle") { open.has(c.id) ? open.delete(c.id) : open.add(c.id); draw(); view.querySelector(`[data-branch-id="${c.id}"]`).focus({ preventScroll: true }); }
+          else MapPage.ask(c);
+        };
+        if (open.has(c.id)) {
+          c.children.forEach((d, j) => {
+            const da = cm + (j - (c.children.length - 1) / 2) * Math.min(0.09, cspan / Math.max(1, c.children.length));
+            const [dx, dy] = polar(R3, da);
+            el("path", { class: "link", d: `M${cx},${cy} L${dx},${dy}` }, links);
+            const dg = el("g", { class: "hit" }, nodes);
+            el("circle", { cx: dx, cy: dy, r: 3, class: "dot" }, dg);
+            const dr = Math.cos(da) >= 0;
+            label(dg, dx + (dr ? 8 : -8), dy, d.name, "detail-text", 30, dr ? "start" : "end");
+            MapPage.accessible(dg, d.name);
+            dg.onclick = (e) => { e.stopPropagation(); MapPage.ask(d); };
+          });
+        }
+      });
+      const sg = el("g", { class: "hit" }, nodes);
+      const lines = wrap(s.name, 20);
+      const w = Math.max(...lines.map((l) => l.length)) * 7.4 + 20, h = lines.length * 16 + 12;
+      el("rect", { x: sx - w / 2, y: sy - h / 2, width: w, height: h, rx: 8, class: "sub-box" }, sg);
+      label(sg, sx, sy, s.name, "sub-text", 20);
+      const tip = el("title", {}, sg); tip.textContent = s.line || "";
+      MapPage.accessible(sg, s.name);
+      sg.onclick = (e) => { e.stopPropagation(); MapPage.ask(s); };
+      a0 += span;
+    }
+    const tg = el("g", { class: "hit" }, nodes);
+    const tl = wrap(t.name, 18);
+    const tw = Math.max(...tl.map((l) => l.length)) * 8.6 + 28, th = tl.length * 16 + 22;
+    el("rect", { x: -tw / 2, y: -th / 2, width: tw, height: th, rx: 12, class: "topic-box" }, tg);
+    label(tg, 0, 0, t.name, "topic-text", 18);
+    const tt = el("title", {}, tg); tt.textContent = t.line || "";
+    MapPage.accessible(tg, t.name);
+    tg.onclick = (e) => { e.stopPropagation(); MapPage.ask(t); };
+  }
+  function apply() { view.setAttribute("transform", `translate(${zoom.x},${zoom.y}) scale(${zoom.k})`); }
+  function fit() {
+    const b = view.getBBox(), W = svg.clientWidth, H = svg.clientHeight;
+    const k = Math.min(1.2, (W - 40) / b.width, (H - 70) / b.height);
+    zoom = { k, x: W / 2 - (b.x + b.width / 2) * k, y: (H + 40) / 2 - (b.y + b.height / 2) * k };
+    d3.select(svg).call(zoomer.transform, d3.zoomIdentity.translate(zoom.x, zoom.y).scale(zoom.k));
+  }
+  const zoomer = d3.zoom().scaleExtent([.02, 8]).on("zoom", (e) => {
+    zoom = { x: e.transform.x, y: e.transform.y, k: e.transform.k };
+    apply();
+  });
+  d3.select(svg).call(zoomer).on("dblclick.zoom", null);
+  svg.style.touchAction = "none";
+  MapPage.zoomControls(() => d3.select(svg).call(zoomer.scaleBy, 1.25), () => d3.select(svg).call(zoomer.scaleBy, .8));
+  new ResizeObserver(fit).observe(svg);
+  document.getElementById("fit").onclick = fit;
+  document.getElementById("all").onclick = () => { t.children.forEach((s) => s.children.forEach((c) => c.children.length && open.add(c.id))); draw(); fit(); };
+  document.getElementById("reset").onclick = () => { open.clear(); draw(); fit(); };
+  draw();
+  fit();
+</script>
+</body>
+</html>

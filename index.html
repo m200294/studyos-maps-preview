@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudyOS preview</title>
+<meta name="description" content="What StudyOS is, and five ways to see a course at a glance: an early preview shared for feedback.">
+<link rel="stylesheet" href="common.css">
+<style>
+  body { height: auto; display: block; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1120px; margin: 0 auto; padding: 18px 20px; }
+  .top .note { font-size: 13px; color: var(--muted); }
+  main { max-width: 1120px; margin: 0 auto; padding: 0 20px 96px; }
+
+  .intro { padding: 36px 0 44px; }
+  .hello { font-size: 16px; color: var(--muted); margin: 0 0 10px; }
+  .intro h1 { font-family: var(--display); font-weight: 700; font-size: clamp(38px, 6vw, 64px); line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 16px; }
+  .intro .sub { font-size: clamp(18px, 2vw, 21px); line-height: 1.5; margin: 0 0 10px; max-width: 46ch; }
+  .intro .limits { font-size: 15px; color: var(--muted); margin: 0; max-width: 60ch; }
+  .top-cta .btn { min-height: 44px; }
+  .top-cta { margin: 22px 0 44px; }
+  .pipeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; position: relative; }
+  .pipeline::before { content: ""; position: absolute; top: 33px; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, var(--accent) 0 30%, var(--line-strong) 30% 100%); }
+  .pipeline li { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .pipeline .dot { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 14px; position: relative; z-index: 1; margin-bottom: 6px; }
+  .pipeline .soon .dot { background: var(--panel); color: var(--muted); border: 2px solid var(--line-strong); }
+  .pipeline h2 { margin: 0; font-size: 16px; line-height: 1.3; }
+  .pipeline p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .pipeline .soon h2 { color: var(--muted); }
+  .pipeline .here { border: 2px solid var(--accent); background: var(--accent-soft); box-shadow: var(--shadow); transform: translateY(-6px); }
+  .pipeline .here p { color: var(--ink); }
+  .tag { position: absolute; top: 20px; right: 14px; font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px 8px; }
+  .tag.now { position: absolute; top: -12px; left: 14px; right: auto; background: var(--accent); color: var(--accent-ink); border: 0; padding: 3px 10px; }
+  .preview { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; border-top: 1px solid var(--line); padding: 40px 0; }
+  .preview h2 { font-family: var(--display); font-size: 26px; line-height: 1.15; margin: 0; }
+  .preview p { font-size: 18px; line-height: 1.55; margin: 0 0 14px; max-width: 60ch; }
+  .preview .muted { color: var(--muted); font-size: 16px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; font-size: 15px; padding: 11px 18px; border-radius: 10px; transition: background-color 0.15s, border-color 0.15s, transform 0.15s; }
+  .btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { transform: translateY(-1px); filter: brightness(1.06); }
+  .btn.ghost { color: var(--ink); border: 1px solid var(--line-strong); }
+  .btn.ghost:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  .tree { background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); padding: 22px 24px; font-size: 15px; }
+  .tree .cap { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+  .tree ul { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 1px solid var(--line); }
+  .tree > ul { padding: 0; border: 0; }
+  .tree li { margin: 6px 0; }
+  .tree li > span { display: inline-flex; align-items: baseline; gap: 8px; }
+  .tree b { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; }
+  .t-topic > span { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--topic); }
+  .t-sub > span { font-weight: 600; color: var(--sub); }
+  .t-concept > span { color: var(--ink); }
+  .t-detail > span { color: var(--detail); font-size: 14px; }
+  .t-topic b { color: var(--topic); } .t-sub b { color: var(--sub); } .t-concept b { color: var(--accent); } .t-detail b { color: var(--detail); }
+
+  .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr); gap: 48px; align-items: center; border-top: 1px solid var(--line); padding: 44px 0; }
+  .why h2 { font-family: var(--display); font-size: 26px; line-height: 1.15; margin: 0 0 14px; }
+  .example { margin: 0; }
+  .example figcaption { display: flex; align-items: flex-end; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--accent); margin: 0 0 10px; }
+  .example figcaption svg { width: 44px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .why .big { font-size: clamp(18px, 1.8vw, 20px); line-height: 1.6; margin: 0 0 12px; max-width: 48ch; text-wrap: pretty; }
+  .why .src { margin: 0; font-size: 13px; color: var(--muted); }
+  .why .src a { color: var(--muted); text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+  .why .src a:hover { color: var(--accent); }
+  .ask { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 36px 0; }
+  .ask h2 { font-family: var(--display); font-size: 26px; line-height: 1.15; margin: 0; }
+  .ask ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; counter-reset: s; }
+  .ask li { counter-increment: s; font-size: 15px; line-height: 1.55; }
+  .ask li::before { content: counter(s); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+
+  section { margin-top: 64px; }
+  .sechead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .sechead h2 { font-family: var(--display); font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+  .sechead p { color: var(--muted); margin: 0; max-width: 60ch; }
+
+  .views { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+  .view { grid-column: span 2; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; color: inherit; text-decoration: none; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+  .view.wide { grid-column: span 3; }
+  .view:hover { border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-3px); }
+  .view .shot { aspect-ratio: 16 / 10; overflow: hidden; border-bottom: 1px solid var(--line); background: var(--bg); }
+  .view img { width: 100%; height: 100%; object-fit: cover; object-position: left top; display: block; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+  .view:hover img { transform: scale(1.03); }
+  .view .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .view .kindtag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+  .view h3 { margin: 0; font-size: 19px; }
+  .view p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .view .go { margin-top: auto; padding-top: 10px; color: var(--accent); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+  .view .go svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s; }
+  .view:hover .go svg { transform: translateX(3px); }
+
+  .subjects { border-top: 1px solid var(--line); }
+  .subject { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; padding: 18px 4px; border-bottom: 1px solid var(--line); }
+  .subject h3 { margin: 0; font-size: 18px; }
+  .subject .meta { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
+  .subject .topics { grid-column: 1; color: var(--muted); font-size: 14px; line-height: 1.5; margin: 4px 0 0; }
+  .subject .links { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 430px; }
+  .links a { font-size: 13px; font-weight: 500; text-decoration: none; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; transition: border-color 0.15s, background-color 0.15s; }
+  .links a:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+  .foot { margin-top: 56px; color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 70ch; }
+
+  @media (max-width: 960px) {
+    .pipeline { grid-template-columns: 1fr; gap: 12px; }
+    .pipeline::before { top: 20px; bottom: 20px; left: 30px; right: auto; width: 2px; height: auto; background: linear-gradient(180deg, var(--accent) 0 30%, var(--line-strong) 30% 100%); }
+    .pipeline li { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; row-gap: 2px; padding: 14px 16px; }
+    .pipeline .dot { grid-row: 1 / span 2; margin: 0; }
+    .pipeline .here { transform: none; margin-top: 10px; }
+    .tag { top: 14px; }
+    .pipeline .soon h2 { padding-right: 64px; }
+    .why, .preview { grid-template-columns: 1fr; gap: 24px; }
+    .ask, .why { grid-template-columns: 1fr; gap: 18px; }
+    .ask ol { grid-template-columns: 1fr; gap: 16px; }
+    .views { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .view, .view.wide { grid-column: span 1; }
+  }
+  @media (max-width: 640px) {
+    .top .note { display: none; }
+    .views { grid-template-columns: 1fr; }
+    .subject { grid-template-columns: 1fr; }
+    .subject .links { grid-column: 1; grid-row: auto; justify-content: flex-start; margin-top: 6px; }
+    .preview p { font-size: 17px; }
+    .intro { padding-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html">StudyOS <span>preview</span></a>
+  <span class="note">An early prototype, shared for feedback</span>
+</header>
+<main>
+  <section class="intro" aria-labelledby="what">
+    <p class="hello">An early preview. I need your feedback.</p>
+    <h1 id="what">What is StudyOS?</h1>
+    <p class="sub">An AI study system that takes you from your first look at a course to still remembering it at exam time.</p>
+    <p class="limits">This preview uses sample course material. You can't add your own files or use the tutor here yet.</p>
+    <div class="cta top-cta"><a class="btn primary" id="start-top" href="outline.html">Explore the sample subjects <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a></div>
+    <ol class="pipeline" role="list" aria-label="How StudyOS works">
+      <li><span class="dot" aria-hidden="true">1</span><h2>Add your material</h2><p>Lecture slides, PDFs, notes and code, week by week.</p></li>
+      <li class="here"><span class="dot" aria-hidden="true">2</span><span class="tag now">You're looking at this part</span><h2>Get the overview</h2><p>StudyOS sorts it into a tree, so you can prime yourself before studying.</p></li>
+      <li class="soon"><span class="dot" aria-hidden="true">3</span><span class="tag">Coming</span><h2>Study with a tutor</h2><p>An AI tutor teaches from <em>your</em> course material, with the map beside the chat.</p></li>
+      <li class="soon"><span class="dot" aria-hidden="true">4</span><span class="tag">Coming</span><h2>It checks what you understood</h2><p>After each session, it reviews your conversation and notes what's clear and what needs more practice.</p></li>
+      <li class="soon"><span class="dot" aria-hidden="true">5</span><span class="tag">Coming</span><h2>Revise at the right time</h2><p>It schedules reviews across the semester, mixing old and new.</p></li>
+    </ol>
+  </section>
+
+  <section class="preview" aria-labelledby="this">
+    <h2 id="this">This preview: the overview</h2>
+    <div>
+      <p>StudyOS reads your learning material (lecture slides, PDFs, notes, code) and sorts it into a tree.</p>
+      <p>The tree is for the few minutes before you study. It gives you a quick overview of what you're about to learn, so you can see where each idea fits, don't feel lost halfway through a session, and find your way around faster. In short, it primes you for the session.</p>
+      <p class="muted">Here is that tree for a few real subjects, drawn five different ways. I'm trying to work out which one actually helps.</p>
+      <div class="cta">
+        <a class="btn primary" id="start" href="outline.html">Start exploring <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        <a class="btn ghost" href="#subjects">Choose a subject</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="why" aria-labelledby="why">
+    <div>
+      <h2 id="why">Why start with an overview?</h2>
+      <p class="big">Your brain remembers new ideas better when it already knows where they fit. Decades of studies back this up: students who get a quick overview before a lesson outperform about two-thirds of those who don't.</p>
+      <p class="src">Sources: <a href="https://www.ideals.illinois.edu/items/20405">Mahar, 1992</a> · <a href="https://doi.org/10.1016/S0022-5371(72)80006-9">Bransford &amp; Johnson, 1972</a></p>
+    </div>
+    <figure class="example">
+      <figcaption><svg viewBox="0 0 48 32" aria-hidden="true"><path d="M3 6c14 0 26 6 34 20"/><path d="M29 24l8 3 2-8"/></svg>What this looks like</figcaption>
+      <div class="tree">
+        <p class="cap">A tree goes up to four levels deep. From Graphics Programming:</p>
+        <ul>
+          <li class="t-topic"><span><b>Topic</b> Vectors</span>
+            <ul>
+              <li class="t-sub"><span><b>Subtopic</b> Magnitude and direction of a vector</span>
+                <ul>
+                  <li class="t-concept"><span><b>Concept</b> Magnitude of a vector</span></li>
+                  <li class="t-concept"><span><b>Concept</b> Normalization and unit vectors</span>
+                    <ul><li class="t-detail"><span><b>Detail</b> Copying a vector before changing it</span></li></ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </figure>
+  </section>
+
+  <div class="ask">
+    <h2>What I'd love your opinion on</h2>
+    <ol>
+      <li>Open a subject in a <b>text</b> view and a <b>map</b> view. The tabs at the top switch views and keep you on the same topic.</li>
+      <li>Click around. A panel beside the view (or at the bottom on a phone) explains whatever you click and what sits under it.</li>
+      <li>Tell me <b>which one you'd actually use</b> to get your bearings, and why. What was confusing, and what's missing?</li>
+    </ol>
+  </div>
+
+  <section>
+    <div class="sechead"><h2>Organised text</h2><p>Reads like a page, top to bottom.</p></div>
+    <div class="views" id="text"></div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Mind maps</h2><p>Shows the shape of a topic. Drag to move, scroll or pinch to zoom.</p></div>
+    <div class="views" id="map"></div>
+  </section>
+  <section id="subjects">
+    <div class="sechead"><h2>Subjects</h2><p>Try one you know and one you've never studied.</p></div>
+    <div class="subjects" id="subject-list"></div>
+  </section>
+
+  <p class="foot">The trees were built automatically by an AI reading the original course files, so some wording or grouping may be off; that's part of what's being tested. Best on a laptop, but it works on a phone. Nothing you do here is sent anywhere or tracked; your browser only remembers that you've seen the tips.</p>
+</main>
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script>
+  const TEXT = {
+    "outline.html": "A fold-out list with a one-line explanation under each subtopic. The plainest and most compact.",
+    "cards.html": "One card per subtopic with its explanation, and its concepts as chips you can open.",
+    "markmap.html": "A sideways tree with coloured, curved branches. Fold and unfold any branch.",
+    "jsmind.html": "A classic mind map: boxes joined by lines, with the explanation inside each subtopic.",
+    "radial.html": "The topic in the middle, subtopics around it, concepts on an outer ring.",
+  };
+  const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>';
+  const first = Object.keys(window.MAPS)[0];
+  document.getElementById("start").href = `outline.html?s=${first}&t=0`;
+  document.getElementById("start-top").href = `outline.html?s=${first}&t=0`;
+  for (const s of MapPage.STYLES) {
+    const a = document.createElement("a");
+    a.className = "view" + (s.group === "Text" ? " wide" : "");
+    a.href = `${s.file}?s=${first}&t=0`;
+    a.innerHTML = `<div class="shot"><img src="shots/${s.file.replace(".html", "")}.png" alt="" loading="lazy"></div><div class="body"><span class="kindtag">${s.group === "Text" ? "Text" : "Map"}</span><h3>${s.name}</h3><p>${TEXT[s.file]}</p><span class="go">Open ${s.name.toLowerCase()} ${arrow}</span></div>`;
+    document.getElementById(s.group === "Text" ? "text" : "map").append(a);
+  }
+  const list = document.getElementById("subject-list");
+  for (const [slug, m] of Object.entries(window.MAPS)) {
+    const items = m.topics.reduce((a, t) => a + MapPage.count(t), 0);
+    const div = document.createElement("article");
+    div.className = "subject";
+    div.innerHTML = `<div><h3></h3><p class="meta">${m.topics.length} topic${m.topics.length > 1 ? "s" : ""} · ${items} items</p></div><p class="topics"></p><div class="links">${MapPage.STYLES.map((s) => `<a href="${s.file}?s=${slug}&t=0">${s.name}</a>`).join("")}</div>`;
+    div.querySelector("h3").textContent = m.subject;
+    div.querySelector(".topics").textContent = m.topics.map((t) => t.name).join(" · ");
+    list.append(div);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jsMind map</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="vendor/jsmind.css">
+<style>
+  .map { overflow: hidden; }
+  #jm { position: absolute; inset: 56px 0 0 0; }
+  jmnodes jmnode { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; font: 14px system-ui, sans-serif; padding: 6px 10px; max-width: 260px; white-space: normal; box-shadow: none; overflow-wrap: anywhere; }
+  jmnodes jmnode.root { background: var(--topic); color: var(--topic-ink); font-size: 16px; font-weight: 600; max-width: 320px; }
+  jmnodes jmnode small { display: block; font-size: 12px; font-weight: 400; opacity: 0.75; margin-top: 3px; }
+  jmnodes jmnode.sub { border-color: var(--sub); background: var(--sub-soft); }
+  jmnodes jmnode.selected { background: var(--accent-soft); color: var(--ink); }
+  jmnodes jmexpander { background: var(--panel); color: var(--ink); border-color: var(--line); }
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="map">
+    <div class="tools"><button id="fit">Fit to screen</button><button id="all">Expand all</button><button id="reset">Collapse</button></div>
+    <div id="jm"></div>
+  </main>
+  <aside class="chat"></aside>
+</div>
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script src="vendor/jsmind.js"></script>
+<script>
+  MapPage.header("jsMind");
+  const t = MapPage.topic();
+  const byId = new Map();
+  function node(n, depth) {
+    byId.set("n" + n.id, n);
+    return { id: "n" + n.id, topic: n.name, expanded: depth < 2, children: n.children.map((c) => node(c, depth + 1)) };
+  }
+  let jm;
+  function fit() {
+    jm.view.set_zoom(1);
+    const p = jm.view.e_panel;
+    jm.view.set_zoom(Math.min(1, p.clientWidth / jm.view.size.w, p.clientHeight / jm.view.size.h));
+    p.scrollLeft = Math.max(0, (jm.view.size.w * jm.view.zoom_current - p.clientWidth) / 2);
+    p.scrollTop = Math.max(0, (jm.view.size.h * jm.view.zoom_current - p.clientHeight) / 2);
+  }
+  function render() {
+    if (!jm) {
+      jm = new jsMind({
+        container: "jm", editable: false, mode: "full", support_html: false, shortcut: { enable: false },
+        view: {
+          engine: "svg", hmargin: 40, vmargin: 30, zoom: { min: 0.02, max: 2.1, step: 0.1 }, line_width: 1.5, line_color: "#8aa9a4", node_overflow: "wrap",
+          custom_node_render: (jm, el, n) => {
+            const s = byId.get(n.id);
+            MapPage.accessible(el, s.name);
+            const name = document.createElement("span");
+            name.textContent = s.name;
+            el.append(name);
+            if (s.line && s.kind !== "topic") {
+              const small = document.createElement("small");
+              small.textContent = s.line;
+              el.append(small);
+            }
+            if (s.kind === "subtopic") el.classList.add("sub");
+            return true;
+          },
+        },
+        layout: { hspace: 40, vspace: 14, pspace: 14 },
+      });
+    }
+    jm.show({ meta: { name: t.name }, format: "node_tree", data: node(t, 0) });
+    requestAnimationFrame(() => setTimeout(fit, 50));
+  }
+  render();
+  function branchControls() {
+    document.querySelectorAll("jmexpander").forEach((el) => {
+      const n = jm.get_node(el.getAttribute("nodeid"));
+      MapPage.accessible(el, "Fold or unfold " + byId.get(n.id).name);
+      el.setAttribute("aria-expanded", String(n.expanded));
+    });
+  }
+  branchControls();
+  jm.add_event_listener(branchControls);
+  document.getElementById("jm").addEventListener("click", () => requestAnimationFrame(branchControls));
+  const surface = jm.view.e_panel;
+  surface.style.touchAction = "none";
+  surface.tabIndex = -1;
+  // jsMind cancels Tab before it checks shortcut.enable. Keep native focus navigation.
+  surface.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") e.stopImmediatePropagation();
+  }, true);
+  const pointers = new Map();
+  let gesture = null, moved = false;
+  const geometry = () => {
+    const points = [...pointers.values()];
+    const a = points[0], b = points[1] || a;
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, distance: Math.hypot(a.x - b.x, a.y - b.y) };
+  };
+  surface.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) moved = false;
+    gesture = geometry();
+  });
+  surface.addEventListener("pointermove", (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const next = geometry();
+    if (Math.hypot(next.x - gesture.x, next.y - gesture.y) > 3 || Math.abs(next.distance - gesture.distance) > 3) moved = true;
+    if (pointers.size > 1 && gesture.distance) jm.view.set_zoom(Math.max(.02, Math.min(2.1, jm.view.zoom_current * next.distance / gesture.distance)), next);
+    surface.scrollBy(gesture.x - next.x, gesture.y - next.y);
+    gesture = next;
+  });
+  function endPointer(e) { pointers.delete(e.pointerId); gesture = pointers.size ? geometry() : null; }
+  window.addEventListener("pointerup", endPointer);
+  window.addEventListener("pointercancel", endPointer);
+  surface.addEventListener("click", (e) => { if (moved) { e.preventDefault(); e.stopImmediatePropagation(); moved = false; } }, true);
+  surface.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    jm.view.set_zoom(Math.max(.02, Math.min(2.1, jm.view.zoom_current * (e.deltaY < 0 ? 1.1 : 1 / 1.1))), { x: e.clientX, y: e.clientY });
+  }, { passive: false });
+  document.getElementById("jm").addEventListener("click", (e) => {
+    const el = e.target.closest("jmnode");
+    if (el) MapPage.ask(byId.get(el.getAttribute("nodeid")));
+  });
+  MapPage.zoomControls(() => jm.view.set_zoom(Math.min(2.1, jm.view.zoom_current * 1.25)), () => jm.view.set_zoom(Math.max(.02, jm.view.zoom_current * .8)));
+  document.getElementById("fit").onclick = fit;
+  document.getElementById("all").onclick = () => { jm.expand_all(); fit(); };
+  document.getElementById("reset").onclick = () => { render(); branchControls(); };
+  new ResizeObserver(() => { jm.resize(); fit(); }).observe(document.getElementById("jm"));
+</script>
+</body>
+</html>

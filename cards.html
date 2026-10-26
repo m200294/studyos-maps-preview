@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card map</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .map { padding: 24px 28px 60px; }
+  .topic { border-radius: 14px; background: var(--topic); color: var(--topic-ink); padding: 18px 22px; margin-bottom: 20px; cursor: pointer; }
+  @media (prefers-color-scheme: dark) { .topic { color: #10201f; } }
+  .topic h1 { margin: 0 0 6px; font-family: var(--display); font-size: 26px; line-height: 1.15; }
+  .topic p { margin: 0; opacity: 0.85; max-width: 75ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--sub); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .card h2 { margin: 0; font-size: 16px; color: var(--sub); cursor: pointer; }
+  .card .line { margin: 0; color: var(--muted); font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; color: var(--ink); font: inherit; font-size: 13px; text-align: left; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.has { padding-right: 8px; }
+  .chip.has::after { content: " +" ; color: var(--muted); }
+  .chip.open { background: var(--accent-soft); border-color: var(--accent); }
+  .chip.open::after { content: " −"; }
+  .details { display: none; width: 100%; border-left: 2px solid var(--detail); padding: 4px 0 4px 10px; margin: 2px 0 4px; }
+  .details.show { display: block; }
+  .details button { display: block; background: none; border: 0; color: var(--detail); font: inherit; font-size: 13px; padding: 2px 0; cursor: pointer; text-align: left; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="map" id="map"></main>
+  <aside class="chat"></aside>
+</div>
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script>
+  MapPage.header("Cards");
+  const t = MapPage.topic();
+  const map = document.getElementById("map");
+  const head = document.createElement("div");
+  head.className = "topic";
+  head.innerHTML = '<h1><button class="node-title"></button></h1><p></p>';
+  head.querySelector("h1 button").textContent = t.name;
+  head.querySelector("p").textContent = t.line || "";
+  head.onclick = () => MapPage.ask(t);
+  map.append(head);
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  for (const s of t.children) {
+    const card = document.createElement("section");
+    card.className = "card";
+    const h = document.createElement("h2");
+    const title = document.createElement("button");
+    title.className = "node-title";
+    title.textContent = s.name;
+    h.append(title);
+    h.onclick = () => MapPage.ask(s);
+    card.append(h);
+    if (s.line) {
+      const p = document.createElement("p");
+      p.className = "line";
+      p.textContent = s.line;
+      card.append(p);
+    }
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    for (const c of s.children) {
+      const chip = document.createElement("button");
+      chip.className = "chip" + (c.children.length ? " has" : "");
+      chip.textContent = c.name;
+      chips.append(chip);
+      let box = null;
+      if (c.children.length) {
+        box = document.createElement("div");
+        box.className = "details";
+        box.id = "details-" + c.id;
+        chip.setAttribute("aria-controls", box.id);
+        chip.setAttribute("aria-expanded", "false");
+        for (const d of c.children) {
+          const b = document.createElement("button");
+          b.textContent = "· " + d.name;
+          b.onclick = () => MapPage.ask(d);
+          box.append(b);
+        }
+        chips.append(box);
+      }
+      chip.onclick = (e) => {
+        if (box) {
+          chip.classList.toggle("open");
+          box.classList.toggle("show");
+          chip.setAttribute("aria-expanded", String(chip.classList.contains("open")));
+        }
+        MapPage.ask(c);
+      };
+    }
+    card.append(chips);
+    grid.append(card);
+  }
+  map.append(grid);
+</script>
+</body>
+</html>
