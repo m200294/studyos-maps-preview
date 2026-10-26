@@ -28,6 +28,7 @@
 </div>
 <script src="data.js"></script>
 <script src="common.js"></script>
+<script src="vendor/d3-7.9.0.min.js"></script>
 <script src="vendor/jsmind.js"></script>
 <script>
   MapPage.header("jsMind");
@@ -38,13 +39,14 @@
     return { id: "n" + n.id, topic: n.name, expanded: depth < 2, children: n.children.map((c) => node(c, depth + 1)) };
   }
   let jm;
-  function fit() {
-    resetPan();
-    jm.view.set_zoom(1);
-    const p = jm.view.e_panel;
-    jm.view.set_zoom(Math.min(1, p.clientWidth / jm.view.size.w, p.clientHeight / jm.view.size.h));
-    p.scrollLeft = Math.max(0, (jm.view.size.w * jm.view.zoom_current - p.clientWidth) / 2);
-    p.scrollTop = Math.max(0, (jm.view.size.h * jm.view.zoom_current - p.clientHeight) / 2);
+  let zoomer, stage;
+  // Same smooth feel as the Tree map: d3 handles drag, wheel and pinch; jsMind stays at its natural size.
+  function fit(animate = true) {
+    if (!zoomer) return;
+    const p = jm.view.e_panel, w = jm.view.size.w, h = jm.view.size.h;
+    const k = Math.min(1, (p.clientWidth - 24) / w, (p.clientHeight - 24) / h);
+    const t = d3.zoomIdentity.translate((p.clientWidth - w * k) / 2, (p.clientHeight - h * k) / 2).scale(k);
+    (animate && !reduced ? stage.transition().duration(350) : stage).call(zoomer.transform, t);
   }
   function render() {
     if (!jm) {
@@ -91,57 +93,24 @@
   surface.addEventListener("keydown", (e) => {
     if (e.key === "Tab") e.stopImmediatePropagation();
   }, true);
-  // Free panning: the map fills its panel at Fit, so there is nothing to scroll; move the drawing itself instead.
-  var pan = { x: 0, y: 0 };
-  function resetPan() {
-    pan = { x: 0, y: 0 };
-    applyPan();
-  }
-  function applyPan() {
-    for (const el of jm.view.e_panel.children) el.style.transform = `translate(${pan.x}px, ${pan.y}px)`;
-  }
-  function panBy(dx, dy) {
-    pan = { x: pan.x + dx, y: pan.y + dy };
-    applyPan();
-  }
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  surface.style.overflow = "hidden";
   surface.style.cursor = "grab";
-  surface.addEventListener("pointerdown", () => (surface.style.cursor = "grabbing"));
-  window.addEventListener("pointerup", () => (surface.style.cursor = "grab"));
-  const pointers = new Map();
-  let gesture = null, moved = false;
-  const geometry = () => {
-    const points = [...pointers.values()];
-    const a = points[0], b = points[1] || a;
-    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, distance: Math.hypot(a.x - b.x, a.y - b.y) };
-  };
-  surface.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 1) moved = false;
-    gesture = geometry();
-  });
-  surface.addEventListener("pointermove", (e) => {
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const next = geometry();
-    if (Math.hypot(next.x - gesture.x, next.y - gesture.y) > 3 || Math.abs(next.distance - gesture.distance) > 3) moved = true;
-    if (pointers.size > 1 && gesture.distance) jm.view.set_zoom(Math.max(.02, Math.min(2.1, jm.view.zoom_current * next.distance / gesture.distance)), next);
-    panBy(next.x - gesture.x, next.y - gesture.y);
-    gesture = next;
-  });
-  function endPointer(e) { pointers.delete(e.pointerId); gesture = pointers.size ? geometry() : null; }
-  window.addEventListener("pointerup", endPointer);
-  window.addEventListener("pointercancel", endPointer);
-  surface.addEventListener("click", (e) => { if (moved) { e.preventDefault(); e.stopImmediatePropagation(); moved = false; } }, true);
-  surface.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    jm.view.set_zoom(Math.max(.02, Math.min(2.1, jm.view.zoom_current * (e.deltaY < 0 ? 1.1 : 1 / 1.1))), { x: e.clientX, y: e.clientY });
-  }, { passive: false });
+  surface.style.userSelect = "none";
+  const layers = () => [...surface.children].filter((el) => el.tagName !== "BUTTON");
+  zoomer = d3.zoom().scaleExtent([0.05, 3]).on("start", () => (surface.style.cursor = "grabbing")).on("end", () => (surface.style.cursor = "grab"))
+    .on("zoom", (e) => {
+      const { x, y, k } = e.transform;
+      for (const el of layers()) { el.style.transformOrigin = "0 0"; el.style.transform = `translate(${x}px, ${y}px) scale(${k})`; }
+    });
+  stage = d3.select(surface).call(zoomer).on("dblclick.zoom", null);
+  jm.view.set_zoom(1);
   document.getElementById("jm").addEventListener("click", (e) => {
     const el = e.target.closest("jmnode");
     if (el) MapPage.ask(byId.get(el.getAttribute("nodeid")));
   });
-  MapPage.zoomControls(() => jm.view.set_zoom(Math.min(2.1, jm.view.zoom_current * 1.25)), () => jm.view.set_zoom(Math.max(.02, jm.view.zoom_current * .8)));
+  const step = (f) => (reduced ? stage : stage.transition().duration(200)).call(zoomer.scaleBy, f);
+  MapPage.zoomControls(() => step(1.25), () => step(0.8));
   document.getElementById("fit").onclick = fit;
   document.getElementById("all").onclick = () => { jm.expand_all(); fit(); };
   document.getElementById("reset").onclick = () => { render(); branchControls(); };
