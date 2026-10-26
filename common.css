@@ -192,7 +192,7 @@ button.icon:disabled { opacity: 0.35; cursor: default; }
 @keyframes flicker { 0%, 100% { transform: scale(1, 1) skewX(0deg); } 25% { transform: scale(0.96, 1.06) skewX(-2deg); } 50% { transform: scale(1.03, 0.97) skewX(1.5deg); } 75% { transform: scale(0.98, 1.04) skewX(-1deg); } }
 @keyframes flicker-in { 0%, 100% { transform: scale(1); opacity: 1; } 40% { transform: scale(0.9, 1.12); opacity: 0.85; } 70% { transform: scale(1.05, 0.94); opacity: 1; } }
 .pick select option { color: var(--ink); background: var(--panel); font-weight: 400; }
-@media (prefers-color-scheme: dark) { .pick.fire select { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: elements 10s ease-in-out infinite; }
+.pick.fire select { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: elements 10s ease-in-out infinite; }
 @media (prefers-color-scheme: dark) { .pick.fire select { --c1: #d9a35c; --c2: #4cc3d4; --c3: #ff8a2a; --c4: #c9d3de; --c5: #9d8fff; } }
 @keyframes elements {
   0%, 100% { color: var(--c1); border-color: var(--c1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c1) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c1) 40%, transparent); }
@@ -232,3 +232,24 @@ button.icon:disabled { opacity: 0.35; cursor: default; }
 @keyframes chapter { 0%, 22%, 100% { transform: scale(1); filter: none; } 9% { transform: scale(1.06); filter: brightness(1.5); } }
 .pick .ring { width: 22px; height: 22px; }
 @media (prefers-reduced-motion: reduce) { .ring .glow, .ring .glow-wrap, .ring .fire-core { animation: none !important; } .ring .glow { opacity: 0.35; } }
+
+/* Customisable subject menu where supported (newer Chrome): a styled list with the Five Rings ring and colours. */
+@supports (appearance: base-select) {
+  #pick-subject, #pick-subject::picker(select) { appearance: base-select; }
+  #pick-subject { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; }
+  #pick-subject::picker(select) { background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 12px; padding: 6px; margin-top: 4px; box-shadow: var(--shadow); }
+  #pick-subject option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; color: var(--ink); background: none; font-weight: 500; }
+  #pick-subject option:hover, #pick-subject option:focus-visible { background: var(--accent-soft); outline: none; }
+  #pick-subject option::checkmark { display: none; }
+  #pick-subject option[hidden] { display: none; }
+  #pick-subject::picker-icon { content: ""; width: 12px; height: 12px; margin-left: 4px; background: currentColor; transition: transform 0.2s;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+  #pick-subject:open::picker-icon { transform: rotate(180deg); }
+  #pick-subject option.five .ring { width: 22px; height: 22px; }
+  #pick-subject option.five .five-label { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: five-name 10s ease-in-out infinite; }
+  @media (prefers-color-scheme: dark) { #pick-subject option.five .five-label { --c1: #d9a35c; --c2: #4cc3d4; --c3: #ff8a2a; --c4: #c9d3de; --c5: #9d8fff; } }
+  @keyframes five-name { 0%, 100% { color: var(--c1); } 20% { color: var(--c2); } 40% { color: var(--c3); } 60% { color: var(--c4); } 80% { color: var(--c5); } }
+  /* The closed menu already has the ring beside it, so it shows only the name. */
+  #pick-subject selectedcontent .ring, #pick-subject > button .ring { display: none; }
+  @media (prefers-reduced-motion: reduce) { #pick-subject option.five .five-label { animation: none; color: var(--ink); } }
+}

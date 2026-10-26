@@ -54,6 +54,16 @@
       const option = new Option(window.MAPS[s].subject, s, false, s === slug);
       // The current subject shows in the closed menu but is left out of the open list.
       if (s === slug) option.hidden = true;
+      if (s === "five-rings") {
+        // Browsers with customisable menus (newer Chrome) show the ring in the open list; others read only the text.
+        option.className = "five";
+        option.textContent = "";
+        option.insertAdjacentHTML("beforeend", ring(false));
+        const label = document.createElement("span");
+        label.className = "five-label";
+        label.textContent = window.MAPS[s].subject;
+        option.append(label);
+      }
       ps.add(option);
     }
     if (slug === "five-rings") {
