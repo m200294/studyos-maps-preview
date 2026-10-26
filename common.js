@@ -38,7 +38,7 @@
     const tabs = ["Text", "Map"].map((g) => `<div class="group" role="group" aria-label="${g} views"><span class="glabel">${g}</span>${STYLES.filter((s) => s.group === g)
       .map((s) => `<a class="tab${s.file === here ? " on" : ""}"${s.file === here ? ' aria-current="page"' : ""} href="${s.file}${query(slug, topicIndex)}"><span class="long">${s.name}</span><span class="short">${s.short}</span></a>`).join("")}</div>`).join("");
     bar.innerHTML = `
-      <div class="row1"><a class="brand" href="index.html" title="Back to the start page">StudyOS <span>preview</span></a><nav class="tabs" aria-label="View style">${tabs}</nav></div>
+      <div class="row1"><a class="brand" href="index.html" title="Back to the start page" aria-label="StudyOS preview, back to the start page">StudyOS <span>preview</span></a><nav class="tabs" aria-label="View style">${tabs}</nav></div>
       <div class="row2">
         <label class="pick"><span>Subject</span><select id="pick-subject"></select></label>
         <label class="pick grow"><span>Topic</span><select id="pick-topic"></select></label>
@@ -71,6 +71,8 @@
       pick.classList.add("fire");
       ps.insertAdjacentHTML("beforebegin", ring(false));
     }
+    // Customisable menus: show the chosen subject through <selectedcontent> so long names can be shortened with "…".
+    if (CSS.supports && CSS.supports("appearance", "base-select")) ps.insertAdjacentHTML("afterbegin", "<button><selectedcontent></selectedcontent></button>");
     const pt = bar.querySelector("#pick-topic");
     topics.forEach((t, i) => pt.add(new Option(t.name, i, false, i === topicIndex)));
     ps.onchange = () => go(ps.value, 0);

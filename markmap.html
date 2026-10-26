@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%232f6f6a%27/%3E%3C/svg%3E">
 <title>Markmap map</title>
-<link rel="stylesheet" href="common.css?v=202610270013">
+<link rel="stylesheet" href="common.css?v=202610270019">
 <style>
-  #mm { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); display: block; overflow: visible; transform-origin: 0 0; }
+  #mm { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); display: block; overflow: visible; transform-origin: 0 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .map { touch-action: none; }
   .map { overflow: hidden; }
   .markmap-foreign { color: var(--ink); }
   .markmap-foreign div { color: var(--ink); }
@@ -26,8 +27,8 @@
   </main>
   <aside class="chat"></aside>
 </div>
-<script src="data.js?v=202610270013"></script>
-<script src="common.js?v=202610270013"></script>
+<script src="data.js?v=202610270019"></script>
+<script src="common.js?v=202610270019"></script>
 <script src="vendor/d3-7.9.0.min.js"></script>
 <script src="vendor/markmap-lib.js"></script>
 <script src="vendor/markmap-view.js"></script>
@@ -63,19 +64,29 @@
     document.getElementById("mm").innerHTML = "";
     const root = toMarkmap(t, 0, 0);
     mm = markmap.Markmap.create("#mm", { color: (node) => node.payload?.colour || ROOT, maxWidth: 280, spacingHorizontal: 40, spacingVertical: 10, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 250, fitRatio: 0.95, maxInitialScale: 1 });
-    // Phones redraw every label on each frame of a drag. During a gesture, move the drawing as one layer
-    // and apply the real transform once when the gesture ends.
+    // Phones redraw every label on each frame of a drag. Listen for gestures on the (unmoving) map area and,
+    // during a gesture, move the drawing as one layer; apply the real transform once when the gesture ends.
+    const area = surface.parentNode, base = mm.zoom.filter();
+    mm.svg.on(".zoom", null);
+    mm.zoom.filter((e) => !(e.target.closest && e.target.closest(".tools")) && base(e));
+    d3.select(area).call(mm.zoom).on("dblclick.zoom", null);
     let start = null;
     mm.zoom
-      .on("start.fast", (e) => { if (e.sourceEvent) start = d3.zoomTransform(mm.svg.node()); })
+      .on("start.fast", (e) => { if (e.sourceEvent) start = d3.zoomTransform(area); })
       .on("zoom", (e) => {
         const t = e.transform;
         if (start && e.sourceEvent) {
           const s = t.k / start.k;
           surface.style.transform = `translate(${t.x - s * start.x}px, ${t.y - s * start.y}px) scale(${s})`;
-        } else mm.g.attr("transform", t);
+        } else { mm.g.attr("transform", t); area.__zoom = t; }
       })
-      .on("end.fast", (e) => { if (start) { start = null; surface.style.transform = ""; mm.g.attr("transform", e.transform); } });
+      .on("end.fast", (e) => {
+        if (!start) return;
+        start = null;
+        surface.style.transform = "";
+        mm.g.attr("transform", e.transform);
+        mm.svg.node().__zoom = e.transform;
+      });
     await mm.setData(root);
     if (version === renderVersion) await mm.fit();
   }

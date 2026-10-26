@@ -246,6 +246,8 @@ button.icon:disabled { opacity: 0.35; cursor: default; }
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
   #pick-subject:open::picker-icon { transform: rotate(180deg); }
   #pick-subject option.five .ring { width: 22px; height: 22px; }
+  #pick-subject > button { display: flex; align-items: center; flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; }
+  #pick-subject selectedcontent { display: block; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
   #pick-subject option.five .five-label { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: five-name 10s ease-in-out infinite; }
   @media (prefers-color-scheme: dark) { #pick-subject option.five .five-label { --c1: #d9a35c; --c2: #4cc3d4; --c3: #ff8a2a; --c4: #c9d3de; --c5: #9d8fff; } }
   @keyframes five-name { 0%, 100% { color: var(--c1); } 20% { color: var(--c2); } 40% { color: var(--c3); } 60% { color: var(--c4); } 80% { color: var(--c5); } }
@@ -267,18 +269,26 @@ body.full-map #status .close { display: grid; }
 
 /* Phones: one compact header row for views, one for subject/topic/arrows */
 @media (max-width: 860px) {
-  .bar .row1 { flex-wrap: nowrap; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 6px 10px; }
-  .bar .row1::-webkit-scrollbar { display: none; }
-  .brand { font-size: 16px; flex: none; }
-  .tabs { flex-wrap: nowrap; width: auto; }
-  .group { flex: none; }
-  .tab { padding: 4px 10px; font-size: 13px; }
-  .bar .row2 { flex-wrap: nowrap; gap: 6px; padding: 6px 10px; }
-  .pick { flex: 1 1 0; min-width: 0; gap: 0; }
+  /* Views: a home button plus one evenly spaced segmented bar, with a small gap between text and map views. */
+  .bar .row1 { flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
+  .brand { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; font-size: 0; }
+  .brand::before { content: "S"; font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--ink); }
+  .brand span { display: none; }
+  .tabs { flex: 1; display: flex; flex-wrap: nowrap; gap: 6px; width: auto; min-width: 0; }
+  .group { flex: 1; display: flex; gap: 2px; padding: 3px; min-width: 0; }
+  .group:first-child { flex: 2; } .group:last-child { flex: 3; }
+  .tab { flex: 1; text-align: center; padding: 8px 2px; font-size: 13.5px; min-width: 0; }
+  /* Subject on its own line; the topic picker sits between the previous/next arrows on the next. */
+  .bar .row2 { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; grid-template-areas: "subject subject subject" "prev topic next"; gap: 8px; padding: 8px 10px 10px; }
+  .row2 .pick:first-child { grid-area: subject; }
+  .row2 .pick.grow { grid-area: topic; }
+  .row2 .step { display: contents; }
+  .row2 #prev { grid-area: prev; } .row2 #next { grid-area: next; }
+  .step button.icon { width: 40px; height: 40px; }
+  .pick { min-width: 0; gap: 0; }
   .pick .ring { display: none; }
-  .pick select, #pick-subject { width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; padding: 6px 8px; }
-  .step { gap: 4px; flex: none; }
-  .step button.icon { width: 36px; height: 36px; }
+  .pick select { width: 100%; min-width: 0; height: 40px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; padding: 6px 10px; }
+  #pick-subject { overflow: visible; }
   .tools { top: 8px; left: 8px; }
   #mm, #jm { inset: 52px 0 0 0 !important; }
 }
