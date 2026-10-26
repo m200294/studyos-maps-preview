@@ -12,6 +12,7 @@
   .markmap-foreign { color: var(--ink); }
   .markmap-foreign div { color: var(--ink); }
   .markmap-node circle { --markmap-circle-open-bg: var(--panel); }
+  .markmap-foreign span.sub { font-weight: 600; }
   .markmap-foreign small { color: var(--muted); font-size: 0.8em; display: block; }
   .markmap-foreign span[data-id] { cursor: pointer; }
   .markmap-foreign span[data-id]:hover { text-decoration: underline; }
@@ -35,11 +36,24 @@
   const t = MapPage.topic();
   const byId = new Map();
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  function toMarkmap(n, depth) {
+  // One colour per subtopic: its line, its name and everything under it share it, so a branch reads as one family.
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const BRANCH = dark
+    ? ["#7cc4bb", "#f0a060", "#86a8f0", "#d29be0", "#7fcf86", "#f08a9e", "#d6c25a", "#a9b6c4"]
+    : ["#2f6f6a", "#b5541c", "#3d63b8", "#8a3f8f", "#2e7d32", "#a33a4f", "#7a6a12", "#4a5a6a"];
+  const ROOT = dark ? "#8a9097" : "#9a958b";
+  function toMarkmap(n, depth, branch) {
     byId.set(String(n.id), n);
-    let html = `<span data-id="${n.id}">${esc(n.name)}</span>`;
+    const colour = depth === 0 ? ROOT : BRANCH[branch % BRANCH.length];
+    let html = depth === 1
+      ? `<span data-id="${n.id}" class="sub" style="color:${colour}">${esc(n.name)}</span>`
+      : `<span data-id="${n.id}">${esc(n.name)}</span>`;
     if (n.line) html += `<small>${esc(n.line)}</small>`;
-    return { content: html, children: n.children.map((c) => toMarkmap(c, depth + 1)), payload: { fold: depth >= 2 && n.children.length ? 1 : 0 } };
+    return {
+      content: html,
+      children: n.children.map((c, i) => toMarkmap(c, depth + 1, depth === 0 ? i : branch)),
+      payload: { fold: depth >= 2 && n.children.length ? 1 : 0, colour },
+    };
   }
   let mm;
   let renderVersion = 0;
@@ -47,8 +61,8 @@
     const version = ++renderVersion;
     if (mm) mm.destroy();
     document.getElementById("mm").innerHTML = "";
-    const root = toMarkmap(t, 0);
-    mm = markmap.Markmap.create("#mm", { maxWidth: 280, spacingHorizontal: 40, spacingVertical: 10, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 250, fitRatio: 0.95, maxInitialScale: 1 });
+    const root = toMarkmap(t, 0, 0);
+    mm = markmap.Markmap.create("#mm", { color: (node) => node.payload?.colour || ROOT, maxWidth: 280, spacingHorizontal: 40, spacingVertical: 10, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 250, fitRatio: 0.95, maxInitialScale: 1 });
     await mm.setData(root);
     if (version === renderVersion) await mm.fit();
   }
