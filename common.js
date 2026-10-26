@@ -243,6 +243,32 @@
     }
   }
 
+  // Map views: a full-screen toggle (the browser's own full screen where allowed, otherwise the map fills the window).
+  function fullScreen() {
+    const button = document.getElementById("full");
+    if (!button) return;
+    const open = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3"/></svg>';
+    const close = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3v3H3M13 6h-3V3M10 13v-3h3M3 10h3v3"/></svg>';
+    const set = (on) => {
+      document.body.classList.toggle("full-map", on);
+      button.innerHTML = on ? close : open;
+      button.setAttribute("aria-label", on ? "Exit full screen" : "Full screen");
+      button.title = button.getAttribute("aria-label");
+      window.dispatchEvent(new Event("resize"));
+    };
+    button.onclick = () => {
+      const on = !document.body.classList.contains("full-map");
+      set(on);
+      const root = document.documentElement;
+      try {
+        if (on && root.requestFullscreen) root.requestFullscreen().catch(() => {});
+        else if (!on && document.fullscreenElement) document.exitFullscreen();
+      } catch (e) { /* the window-filling mode still works */ }
+    };
+    document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("full-map")) set(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("full-map") && !document.fullscreenElement) set(false); });
+  }
+
   function ask(node) {
     if (!node) return;
     dismissCoach();
@@ -275,5 +301,5 @@
     return 1 + node.children.reduce((n, c) => n + count(c), 0);
   }
 
-  window.MapPage = { ring, header, topic, ask, count, accessible, zoomControls, STYLES, ICON };
+  window.MapPage = { fullScreen, ring, header, topic, ask, count, accessible, zoomControls, STYLES, ICON };
 })();

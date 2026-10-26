@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%232f6f6a%27/%3E%3C/svg%3E">
 <title>Markmap map</title>
-<link rel="stylesheet" href="common.css?v=202610270006">
+<link rel="stylesheet" href="common.css?v=202610270013">
 <style>
-  #mm { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); display: block; }
+  #mm { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); display: block; overflow: visible; transform-origin: 0 0; }
   .map { overflow: hidden; }
   .markmap-foreign { color: var(--ink); }
   .markmap-foreign div { color: var(--ink); }
@@ -21,13 +21,13 @@
 <body>
 <div class="layout">
   <main class="map">
-    <div class="tools"><button id="fit">Fit to screen</button><button id="all">Expand all</button><button id="reset">Collapse</button></div>
+    <div class="tools"><button id="full" class="tool" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3"/></svg></button><button id="fit" class="tool" aria-label="Recenter the map" title="Recenter the map"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M8 6.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z"/></svg></button><button id="all" hidden>Expand all</button><button id="reset" hidden>Collapse</button></div>
     <svg id="mm"></svg>
   </main>
   <aside class="chat"></aside>
 </div>
-<script src="data.js?v=202610270006"></script>
-<script src="common.js?v=202610270006"></script>
+<script src="data.js?v=202610270013"></script>
+<script src="common.js?v=202610270013"></script>
 <script src="vendor/d3-7.9.0.min.js"></script>
 <script src="vendor/markmap-lib.js"></script>
 <script src="vendor/markmap-view.js"></script>
@@ -63,6 +63,19 @@
     document.getElementById("mm").innerHTML = "";
     const root = toMarkmap(t, 0, 0);
     mm = markmap.Markmap.create("#mm", { color: (node) => node.payload?.colour || ROOT, maxWidth: 280, spacingHorizontal: 40, spacingVertical: 10, duration: matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 250, fitRatio: 0.95, maxInitialScale: 1 });
+    // Phones redraw every label on each frame of a drag. During a gesture, move the drawing as one layer
+    // and apply the real transform once when the gesture ends.
+    let start = null;
+    mm.zoom
+      .on("start.fast", (e) => { if (e.sourceEvent) start = d3.zoomTransform(mm.svg.node()); })
+      .on("zoom", (e) => {
+        const t = e.transform;
+        if (start && e.sourceEvent) {
+          const s = t.k / start.k;
+          surface.style.transform = `translate(${t.x - s * start.x}px, ${t.y - s * start.y}px) scale(${s})`;
+        } else mm.g.attr("transform", t);
+      })
+      .on("end.fast", (e) => { if (start) { start = null; surface.style.transform = ""; mm.g.attr("transform", e.transform); } });
     await mm.setData(root);
     if (version === renderVersion) await mm.fit();
   }
@@ -92,6 +105,7 @@
     await mm.renderData();
     await mm.fit();
   };
+  MapPage.fullScreen();
 </script>
 </body>
 </html>

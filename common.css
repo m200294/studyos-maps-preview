@@ -253,3 +253,32 @@ button.icon:disabled { opacity: 0.35; cursor: default; }
   #pick-subject selectedcontent .ring, #pick-subject > button .ring { display: none; }
   @media (prefers-reduced-motion: reduce) { #pick-subject option.five .five-label { animation: none; color: var(--ink); } }
 }
+
+/* Map toolbar: icon buttons (full screen, recenter, zoom) */
+.tools .tool, .tools button.zoom { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; }
+.tools .tool svg, .tools button.zoom svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* Full-screen map: header and side panel step aside; the selected-item panel floats over the map. */
+body.full-map .bar { display: none; }
+body.full-map .layout { grid-template-columns: 1fr; }
+body.full-map .panel { position: fixed; right: 12px; bottom: 12px; left: auto; width: min(360px, calc(100vw - 24px)); max-height: 46vh; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); z-index: 5; display: none; }
+body.full-map.picked .panel { display: flex; }
+body.full-map .panel .howto, body.full-map .panel .aside { display: none; }
+body.full-map #status .close { display: grid; }
+
+/* Phones: one compact header row for views, one for subject/topic/arrows */
+@media (max-width: 860px) {
+  .bar .row1 { flex-wrap: nowrap; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 6px 10px; }
+  .bar .row1::-webkit-scrollbar { display: none; }
+  .brand { font-size: 16px; flex: none; }
+  .tabs { flex-wrap: nowrap; width: auto; }
+  .group { flex: none; }
+  .tab { padding: 4px 10px; font-size: 13px; }
+  .bar .row2 { flex-wrap: nowrap; gap: 6px; padding: 6px 10px; }
+  .pick { flex: 1 1 0; min-width: 0; gap: 0; }
+  .pick .ring { display: none; }
+  .pick select, #pick-subject { width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; padding: 6px 8px; }
+  .step { gap: 4px; flex: none; }
+  .step button.icon { width: 36px; height: 36px; }
+  .tools { top: 8px; left: 8px; }
+  #mm, #jm { inset: 52px 0 0 0 !important; }
+}
