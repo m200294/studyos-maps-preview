@@ -50,7 +50,11 @@
       </div>`;
     document.body.prepend(bar);
     const ps = bar.querySelector("#pick-subject");
-    for (const s of slugs) ps.add(new Option(window.MAPS[s].subject + (s === "five-rings" ? " 🔥" : ""), s, false, s === slug));
+    for (const s of slugs) {
+      const option = new Option(window.MAPS[s].subject + (s === "five-rings" ? " 🔥" : ""), s, false, s === slug);
+      if (s === "five-rings") option.className = "fire-option";
+      ps.add(option);
+    }
     if (slug === "five-rings") {
       const pick = ps.closest(".pick");
       pick.classList.add("fire");
