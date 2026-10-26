@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%232f6f6a%27/%3E%3C/svg%3E">
 <title>Markmap map</title>
-<link rel="stylesheet" href="common.css?v=202610270049">
+<link rel="stylesheet" href="common.css?v=202610270131">
 <style>
   #mm { position: absolute; inset: 56px 0 0 0; width: 100%; height: calc(100% - 56px); display: block; overflow: visible; transform-origin: 0 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .map { touch-action: none; }
@@ -27,8 +27,8 @@
   </main>
   <aside class="chat"></aside>
 </div>
-<script src="data.js?v=202610270049"></script>
-<script src="common.js?v=202610270049"></script>
+<script src="data.js?v=202610270131"></script>
+<script src="common.js?v=202610270131"></script>
 <script src="vendor/d3-7.9.0.min.js"></script>
 <script src="vendor/markmap-lib.js"></script>
 <script src="vendor/markmap-view.js"></script>
@@ -58,6 +58,8 @@
   }
   let mm;
   let renderVersion = 0;
+  // Once the reader has moved the map, size changes (a phone's address bar sliding in or out) must not snap it back.
+  let userMoved = false;
   async function render() {
     const version = ++renderVersion;
     if (mm) mm.destroy();
@@ -72,7 +74,7 @@
     d3.select(area).call(mm.zoom).on("dblclick.zoom", null);
     let start = null;
     mm.zoom
-      .on("start.fast", (e) => { if (e.sourceEvent) start = d3.zoomTransform(area); })
+      .on("start.fast", (e) => { if (e.sourceEvent) { userMoved = true; start = d3.zoomTransform(area); } })
       .on("zoom", (e) => {
         const t = e.transform;
         if (start && e.sourceEvent) {
@@ -102,8 +104,20 @@
   new MutationObserver(controls).observe(surface, { childList: true, subtree: true });
   surface.addEventListener("click", () => requestAnimationFrame(controls));
   render();
-  document.fonts.ready.then(() => { if (mm) mm.fit(); });
-  new ResizeObserver(() => { if (mm) mm.fit(); }).observe(surface);
+  document.fonts.ready.then(() => { if (mm && !userMoved) mm.fit(); });
+  new ResizeObserver(() => { if (mm && !userMoved) mm.fit(); }).observe(surface);
+  surface.addEventListener("focusin", (e) => {
+    const el = e.target.closest("[data-id], g.markmap-node > circle");
+    const area = surface.parentNode;
+    area.scrollTop = 0; area.scrollLeft = 0;
+    if (!el || !mm) return;
+    const r = el.getBoundingClientRect(), v = surface.getBoundingClientRect(), pad = 24;
+    if (r.left >= v.left + pad && r.right <= v.right - pad && r.top >= v.top + pad && r.bottom <= v.bottom - pad) return;
+    const k = d3.zoomTransform(area).k;
+    const dx = (v.left + v.width / 2) - (r.left + r.width / 2), dy = (v.top + v.height / 2) - (r.top + r.height / 2);
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    d3.select(area).transition().duration(reduce ? 0 : 250).call(mm.zoom.translateBy, dx / k, dy / k);
+  });
   document.getElementById("mm").addEventListener("click", (e) => {
     const el = e.target.closest("[data-id]");
     if (el) MapPage.ask(byId.get(el.dataset.id));
