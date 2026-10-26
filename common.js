@@ -15,6 +15,14 @@
     close: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
     chevron: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>',
   };
+  // One small picture per view, so the view bar reads at a glance without group words.
+  const VIEW_ICON = {
+    "cards.html": '<rect x="2" y="2.5" width="5" height="5" rx="1"/><rect x="9" y="2.5" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9" y="9.5" width="5" height="5" rx="1"/>',
+    "outline.html": '<path d="M2.5 3.5h.01M5.5 3.5H14M5 8h.01M8 8h6M5 12.5h.01M8 12.5h6"/>',
+    "markmap.html": '<circle cx="2.8" cy="8" r="1.4"/><path d="M4.2 8h1.3c2 0 2-4.5 4-4.5h1.6M5.5 8h5.6M5.5 8c2 0 2 4.5 4 4.5h1.6"/><circle cx="13" cy="3.5" r="1.2"/><circle cx="13" cy="8" r="1.2"/><circle cx="13" cy="12.5" r="1.2"/>',
+    "jsmind.html": '<rect x="1.5" y="6" width="5" height="4" rx="1"/><rect x="9.5" y="1.5" width="5" height="4" rx="1"/><rect x="9.5" y="10.5" width="5" height="4" rx="1"/><path d="M6.5 8H8V3.5h1.5M8 8v4.5h1.5"/>',
+    "radial.html": '<circle cx="8" cy="8" r="2.3"/><path d="M8 5.7V3.2M8 10.3v2.5M5.7 8H3.2M10.3 8h2.5"/><circle cx="8" cy="2" r="0.9"/><circle cx="8" cy="14" r="0.9"/><circle cx="2" cy="8" r="0.9"/><circle cx="14" cy="8" r="0.9"/>',
+  };
   const params = new URLSearchParams(location.search);
   const slugs = Object.keys(window.MAPS);
   const slug = params.get("s") && Object.prototype.hasOwnProperty.call(window.MAPS, params.get("s")) ? params.get("s") : slugs[0];
@@ -35,8 +43,8 @@
     document.title = `${style.name} · ${window.MAPS[slug].subject} · StudyOS preview`;
     const bar = document.createElement("header");
     bar.className = "bar";
-    const tabs = ["Text", "Map"].map((g) => `<div class="group" role="group" aria-label="${g} views"><span class="glabel">${g}</span>${STYLES.filter((s) => s.group === g)
-      .map((s) => `<a class="tab${s.file === here ? " on" : ""}"${s.file === here ? ' aria-current="page"' : ""} href="${s.file}${query(slug, topicIndex)}"><span class="long">${s.name}</span><span class="short">${s.short}</span></a>`).join("")}</div>`).join("");
+    const tabs = ["Text", "Map"].map((g) => `<div class="group" role="group" aria-label="${g} views">${STYLES.filter((s) => s.group === g)
+      .map((s) => `<a class="tab${s.file === here ? " on" : ""}"${s.file === here ? ' aria-current="page"' : ""} href="${s.file}${query(slug, topicIndex)}"><svg class="vicon" viewBox="0 0 16 16" aria-hidden="true">${VIEW_ICON[s.file]}</svg><span class="long">${s.name}</span><span class="short">${s.short}</span></a>`).join("")}</div>`).join("");
     bar.innerHTML = `
       <div class="row1"><a class="brand" href="index.html" title="Back to the start page" aria-label="StudyOS preview, back to the start page">StudyOS <span>preview</span></a><nav class="tabs" aria-label="View style">${tabs}</nav></div>
       <div class="row2">
