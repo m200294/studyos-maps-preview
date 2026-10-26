@@ -269,15 +269,18 @@ body.full-map #status .close { display: grid; }
 
 /* Phones: one compact header row for views, one for subject/topic/arrows */
 @media (max-width: 860px) {
-  /* Views: a home button plus one evenly spaced segmented bar, with a small gap between text and map views. */
+  /* Views: a home icon plus one segmented bar of five equal tabs (a thin divider between text and map views). */
   .bar .row1 { flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
-  .brand { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; font-size: 0; }
-  .brand::before { content: "S"; font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--ink); }
+  .brand { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; font-size: 0; color: var(--ink); }
+  .brand::before { content: ""; width: 20px; height: 20px; background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 11 12 4l9 7M5.5 9.5V20h5v-5.5h3V20h5V9.5' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+  .brand:hover::before { background: var(--accent); }
   .brand span { display: none; }
-  .tabs { flex: 1; display: flex; flex-wrap: nowrap; gap: 6px; width: auto; min-width: 0; }
-  .group { flex: 1; display: flex; gap: 2px; padding: 3px; min-width: 0; }
-  .group:first-child { flex: 2; } .group:last-child { flex: 3; }
-  .tab { flex: 1; text-align: center; padding: 8px 2px; font-size: 13.5px; min-width: 0; }
+  .tabs { flex: 1; display: flex; flex-wrap: nowrap; gap: 2px; min-width: 0; width: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
+  .group { display: contents; }
+  .tab { flex: 1; text-align: center; padding: 8px 0; font-size: 13.5px; min-width: 0; border-radius: 9px; }
+  .group:first-child .tab:last-child { margin-right: 7px; position: relative; }
+  .group:first-child .tab:last-child::after { content: ""; position: absolute; right: -5px; top: 22%; bottom: 22%; width: 1px; background: var(--line-strong); }
   /* Subject on its own line; the topic picker sits between the previous/next arrows on the next. */
   .bar .row2 { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; grid-template-areas: "subject subject subject" "prev topic next"; gap: 8px; padding: 8px 10px 10px; }
   .row2 .pick:first-child { grid-area: subject; }
