@@ -39,6 +39,7 @@
   }
   let jm;
   function fit() {
+    resetPan();
     jm.view.set_zoom(1);
     const p = jm.view.e_panel;
     jm.view.set_zoom(Math.min(1, p.clientWidth / jm.view.size.w, p.clientHeight / jm.view.size.h));
@@ -90,6 +91,22 @@
   surface.addEventListener("keydown", (e) => {
     if (e.key === "Tab") e.stopImmediatePropagation();
   }, true);
+  // Free panning: the map fills its panel at Fit, so there is nothing to scroll; move the drawing itself instead.
+  var pan = { x: 0, y: 0 };
+  function resetPan() {
+    pan = { x: 0, y: 0 };
+    applyPan();
+  }
+  function applyPan() {
+    for (const el of jm.view.e_panel.children) el.style.transform = `translate(${pan.x}px, ${pan.y}px)`;
+  }
+  function panBy(dx, dy) {
+    pan = { x: pan.x + dx, y: pan.y + dy };
+    applyPan();
+  }
+  surface.style.cursor = "grab";
+  surface.addEventListener("pointerdown", () => (surface.style.cursor = "grabbing"));
+  window.addEventListener("pointerup", () => (surface.style.cursor = "grab"));
   const pointers = new Map();
   let gesture = null, moved = false;
   const geometry = () => {
@@ -109,7 +126,7 @@
     const next = geometry();
     if (Math.hypot(next.x - gesture.x, next.y - gesture.y) > 3 || Math.abs(next.distance - gesture.distance) > 3) moved = true;
     if (pointers.size > 1 && gesture.distance) jm.view.set_zoom(Math.max(.02, Math.min(2.1, jm.view.zoom_current * next.distance / gesture.distance)), next);
-    surface.scrollBy(gesture.x - next.x, gesture.y - next.y);
+    panBy(next.x - gesture.x, next.y - gesture.y);
     gesture = next;
   });
   function endPointer(e) { pointers.delete(e.pointerId); gesture = pointers.size ? geometry() : null; }
