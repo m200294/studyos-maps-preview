@@ -50,7 +50,11 @@
       </div>`;
     document.body.prepend(bar);
     const ps = bar.querySelector("#pick-subject");
-    for (const s of slugs) ps.add(new Option(window.MAPS[s].subject, s, false, s === slug));
+    for (const s of slugs) ps.add(new Option(window.MAPS[s].subject + (s === "five-rings" ? " 🔥" : ""), s, false, s === slug));
+    if (slug === "five-rings") {
+      const pick = ps.closest(".pick");
+      pick.classList.add("fire");
+    }
     const pt = bar.querySelector("#pick-topic");
     topics.forEach((t, i) => pt.add(new Option(t.name, i, false, i === topicIndex)));
     ps.onchange = () => go(ps.value, 0);
