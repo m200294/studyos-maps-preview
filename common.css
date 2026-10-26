@@ -194,7 +194,43 @@ button.icon:disabled { opacity: 0.35; cursor: default; }
 .pick select option { color: var(--ink); background: var(--panel); font-weight: 400; }
 .pick select option.fire-option { color: #b8461a; font-weight: 600; }
 @media (prefers-color-scheme: dark) { .pick select option.fire-option { color: #ff9a52; } }
-.pick.fire select { border-color: #e8661f; color: #b8461a; font-weight: 600; animation: pick-smoulder 3.2s ease-in-out infinite; }
-@media (prefers-color-scheme: dark) { .pick.fire select { color: #ff9a52; } }
-@keyframes pick-smoulder { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 110, 40, 0); } 50% { box-shadow: 0 0 0 3px rgba(255, 110, 40, 0.28), 0 0 14px rgba(255, 110, 40, 0.35); } }
-@media (prefers-reduced-motion: reduce) { .flame, .flame .inner, .pick.fire select { animation: none !important; } }
+.pick.fire select { --c1: #9a7847; --c2: #2f7f8a; --c3: #c4541a; --c4: #66707a; --c5: #4b3f9e; font-weight: 600; animation: elements 10s ease-in-out infinite; }
+@media (prefers-color-scheme: dark) { .pick.fire select { --c1: #d9a35c; --c2: #4cc3d4; --c3: #ff8a2a; --c4: #c9d3de; --c5: #9d8fff; } }
+@keyframes elements {
+  0%, 100% { color: var(--c1); border-color: var(--c1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c1) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c1) 40%, transparent); }
+  20% { color: var(--c2); border-color: var(--c2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c2) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c2) 40%, transparent); }
+  40% { color: var(--c3); border-color: var(--c3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c3) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c3) 40%, transparent); }
+  60% { color: var(--c4); border-color: var(--c4); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c4) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c4) 40%, transparent); }
+  80% { color: var(--c5); border-color: var(--c5); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c5) 22%, transparent), 0 0 14px color-mix(in srgb, var(--c5) 40%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .flame, .flame .inner, .pick.fire select { animation: none !important; color: var(--ink); } }
+
+/* Five Rings emblem: chapter order Earth, Water, Fire, Wind, Void. Each element glows in its own colour and rhythm. */
+.ring { --earth: #9a7847; --water: #428c98; --wind: #8e98a3; --fire: #f07426; --fire-tip: #ffba52; --void: #252338;
+  --earth-glow: #d9a35c; --water-glow: #4cc3d4; --wind-glow: #c9d3de; --fire-glow: #ff8a2a; --void-glow: #8b7bff;
+  width: 24px; height: 24px; flex: none; overflow: visible; }
+@media (prefers-color-scheme: dark) { .ring { --wind: #b2b9c1; --void: #4a4373; } }
+.ring .el-earth { fill: var(--earth); } .ring .el-water { fill: var(--water); } .ring .el-wind { fill: var(--wind); }
+.ring .el-void { fill: var(--void); } .ring .el-fire { fill: var(--fire); } .ring .fire-core { fill: var(--fire-tip); }
+.ring .glow-earth { fill: var(--earth-glow); } .ring .glow-water { fill: var(--water-glow); } .ring .glow-wind { fill: var(--wind-glow); }
+.ring .glow-fire { fill: var(--fire-glow); } .ring .glow-void { fill: var(--void-glow); }
+.ring .glow, .ring .glow-wrap, .ring .fire-core { transform-box: view-box; transform-origin: 50px 50px; }
+/* Modes, all at once: Earth rumbles slowly, Water flows, Wind sways quickly, Fire flickers, Void breathes. */
+.ring .glow-earth { animation: g-earth 5s ease-in-out infinite; }
+.ring .glow-water { animation: g-water 3.2s ease-in-out infinite; }
+.ring .glow-wind { animation: g-wind 1.9s ease-in-out infinite; }
+.ring .glow-fire { animation: g-fire 1.3s ease-in-out infinite; }
+.ring .glow-void { animation: g-void 4.4s ease-in-out infinite; }
+.ring .fire-core { animation: core 1.6s ease-in-out infinite; }
+@keyframes g-earth { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.6; } }
+@keyframes g-water { 0%, 100% { opacity: 0.3; transform: rotate(-3deg); } 50% { opacity: 0.75; transform: rotate(3deg); } }
+@keyframes g-wind { 0%, 100% { opacity: 0.2; transform: rotate(4deg); } 50% { opacity: 0.6; transform: rotate(-4deg); } }
+@keyframes g-fire { 0%, 100% { opacity: 0.5; } 30% { opacity: 0.9; } 55% { opacity: 0.4; } 80% { opacity: 0.85; } }
+@keyframes g-void { 0%, 100% { opacity: 0.2; transform: scale(0.98); } 50% { opacity: 0.85; transform: scale(1.04); } }
+@keyframes core { 0%, 100% { transform: rotate(0deg) scale(1); opacity: 1; } 35% { transform: rotate(-2.5deg) scale(1.02); opacity: 0.75; } 70% { transform: rotate(2deg) scale(0.99); opacity: 1; } }
+/* Front page: the chapters also swell in turn, each in its own colour. */
+.ring-full .glow-wrap { animation: chapter 10s ease-in-out infinite; }
+.ring-full .gw-water { animation-delay: 2s; } .ring-full .gw-fire { animation-delay: 4s; } .ring-full .gw-wind { animation-delay: 6s; } .ring-full .gw-void { animation-delay: 8s; }
+@keyframes chapter { 0%, 22%, 100% { transform: scale(1); filter: none; } 9% { transform: scale(1.06); filter: brightness(1.5); } }
+.pick .ring { width: 22px; height: 22px; }
+@media (prefers-reduced-motion: reduce) { .ring .glow, .ring .glow-wrap, .ring .fire-core { animation: none !important; } .ring .glow { opacity: 0.35; } }

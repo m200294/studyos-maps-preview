@@ -51,13 +51,14 @@
     document.body.prepend(bar);
     const ps = bar.querySelector("#pick-subject");
     for (const s of slugs) {
-      const option = new Option(window.MAPS[s].subject + (s === "five-rings" ? " 🔥" : ""), s, false, s === slug);
+      const option = new Option(window.MAPS[s].subject, s, false, s === slug);
       if (s === "five-rings") option.className = "fire-option";
       ps.add(option);
     }
     if (slug === "five-rings") {
       const pick = ps.closest(".pick");
       pick.classList.add("fire");
+      ps.insertAdjacentHTML("beforebegin", ring(false));
     }
     const pt = bar.querySelector("#pick-topic");
     topics.forEach((t, i) => pt.add(new Option(t.name, i, false, i === topicIndex)));
@@ -154,6 +155,41 @@
     show(0);
   }
 
+  // The Book of Five Rings emblem (after Sol's "five arcs" reference): one ring, five sharp elemental arcs in
+  // chapter order, each glowing in its own colour and rhythm. "full" adds the chapter cycle.
+  let ringCount = 0;
+  function ring(full) {
+    const id = `rf${++ringCount}`;
+    const P = (r, a) => [50 + r * Math.sin(a * Math.PI / 180), 50 - r * Math.cos(a * Math.PI / 180)].map((v) => v.toFixed(2));
+    const tri = (t, c, w, h) => Math.max(0, h * (1 - Math.abs(t - c) / w)); // a sharp peak
+    const lean = (t, c, w, h) => { const d = t < c ? (c - t) / (w * 1.8) : (t - c) / (w * 0.5); return d < 1 ? h * (1 - d) ** 1.4 : 0; };
+    // Each element: angles, half-width profile and an outer-edge lift, both over t in 0..1 along the arc.
+    // Each element: angles, a thickness profile and an outer-edge lift over t in 0..1; the inner edge stays a clean circle.
+    const shapes = {
+      earth: [-72, -30, (t) => 12, (t) => Math.max(tri(t, 0.2, 0.12, 2.5), tri(t, 0.48, 0.14, 4), tri(t, 0.78, 0.12, 2.5))],
+      water: [-116, -76, (t) => 12 * Math.min(1, 0.45 + t * 1.6), (t) => Math.max(lean(t, 0.38, 0.16, 4.5), lean(t, 0.8, 0.13, 3.5))],
+      wind: [-145, -120, (t) => 4 + 8 * Math.sin(Math.PI * t) ** 0.8, (t) => lean(t, 0.65, 0.2, 2.5)],
+      void: [112, 210, (t) => 3 + 10 * Math.min(1, Math.sin(Math.PI * t) * 2.2) ** 0.7, () => 0],
+      fire: [-26, 108, (t) => 12 * Math.min(1, 0.55 + t * 4), (t) => Math.max(...[[0.12, 11], [0.3, 15], [0.5, 11], [0.68, 9], [0.86, 6.5], [0.97, 3]].map(([c, h]) => lean(t, c, 0.09, h)))],
+    };
+    const shape = ([a0, a1, thick, lift], rIn = 30, scale = 1) => {
+      const outer = [], inner = [];
+      for (let i = 0; i <= 72; i++) {
+        const t = i / 72, a = a0 + (a1 - a0) * t;
+        outer.push(P(rIn + thick(t) * scale + lift(t) * scale, a));
+        inner.push(P(rIn, a));
+      }
+      return `M${outer.map((p) => p.join(" ")).join("L")}L${inner.reverse().map((p) => p.join(" ")).join("L")}Z`;
+    };
+    const core = shape([-20, 98, (t) => 3 * Math.min(1, t * 6, (1 - t) * 6), (t) => shapes.fire[3](0.04 + t * 0.85) * 0.55], 37);
+    const order = ["earth", "water", "fire", "wind", "void"];
+    const glow = order.map((k) => `<g class="glow-wrap gw-${k}"><path class="glow glow-${k}" d="${shape(shapes[k])}" filter="url(#${id})"/></g>`).join("");
+    const body = order.map((k) => `<path class="el el-${k}" d="${shape(shapes[k])}"/>`).join("");
+    return `<svg class="ring${full ? " ring-full" : ""}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+      <defs><filter id="${id}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${full ? 3 : 2.2}"/></filter></defs>
+      ${glow}${body}<path class="el fire-core" d="${core}"/></svg>`;
+  }
+
   function go(s, t) {
     dismissCoach();
     location.search = query(s, t);
@@ -228,5 +264,5 @@
     return 1 + node.children.reduce((n, c) => n + count(c), 0);
   }
 
-  window.MapPage = { header, topic, ask, count, accessible, zoomControls, STYLES, ICON };
+  window.MapPage = { ring, header, topic, ask, count, accessible, zoomControls, STYLES, ICON };
 })();

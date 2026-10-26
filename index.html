@@ -6,7 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%232f6f6a%27/%3E%3C/svg%3E">
 <title>StudyOS preview</title>
 <meta name="description" content="What StudyOS is, and five ways to see a course at a glance: an early preview shared for feedback.">
-<link rel="stylesheet" href="common.css?v=202610262341">
+<link rel="stylesheet" href="common.css?v=202610262355">
 <style>
   body { height: auto; display: block; }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1120px; margin: 0 auto; padding: 18px 20px; }
@@ -100,7 +100,8 @@
   .subject.fire { --fire: #b8461a; --fire-glow: rgba(232, 104, 36, 0.35); --ember: #e8661f; position: relative; overflow: hidden; isolation: isolate; margin: 8px -12px; padding: 20px 16px; border-radius: 14px; border-bottom-color: transparent; background: radial-gradient(120% 140% at 0% 100%, rgba(255, 128, 48, 0.16), transparent 60%), var(--panel); box-shadow: inset 0 0 0 1px var(--fire-glow); animation: smoulder 4.5s ease-in-out infinite; }
   @media (prefers-color-scheme: dark) { .subject.fire { --fire: #ff9a52; --fire-glow: rgba(255, 140, 60, 0.4); --ember: #ffae5c; background: radial-gradient(120% 140% at 0% 100%, rgba(255, 110, 40, 0.20), transparent 60%), var(--panel); } }
   .subject.fire > *:not(.embers) { position: relative; z-index: 1; }
-  .subject.fire h3 { color: var(--fire); display: flex; align-items: center; gap: 8px; }
+  .subject.fire h3 { color: var(--fire); display: flex; align-items: center; gap: 10px; }
+  .subject.fire h3 .ring { width: 46px; height: 46px; margin: -6px 0; }
   .embers { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
   .embers i { position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 6px 1px var(--ember); opacity: 0; animation: rise 4.2s linear infinite; }
   .embers i:nth-child(1) { left: 4%; animation-delay: 0s; }
@@ -233,8 +234,8 @@
 
   <p class="foot">The trees were built automatically by an AI reading the original course files, so some wording or grouping may be off; that's part of what's being tested. Best on a laptop, but it works on a phone. Nothing you do here is sent anywhere or tracked; your browser only remembers that you've seen the tips.</p>
 </main>
-<script src="data.js?v=202610262341"></script>
-<script src="common.js?v=202610262341"></script>
+<script src="data.js?v=202610262355"></script>
+<script src="common.js?v=202610262355"></script>
 <script>
   const TEXT = {
     "outline.html": "A fold-out list with a one-line explanation under each subtopic. The plainest and most compact.",
@@ -262,7 +263,7 @@
     div.innerHTML = `<div><h3></h3><p class="meta">${m.topics.length} topic${m.topics.length > 1 ? "s" : ""} · ${items} items</p></div><p class="topics"></p><div class="links">${MapPage.STYLES.map((s) => `<a href="${s.file}?s=${slug}&t=0">${s.name}</a>`).join("")}</div>`;
     div.querySelector("h3").textContent = m.subject;
     if (slug === "five-rings") {
-      div.querySelector("h3").insertAdjacentHTML("afterbegin", '<svg class="flame" viewBox="0 0 24 32" aria-hidden="true"><path class="outer" d="M12 1c1 6 8 9 8 18a8 8 0 0 1-16 0c0-4 2-7 4-9 0 3 1 5 3 6-1-5 0-10 1-15z"/><path class="inner" d="M12 14c.5 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3.5 2-4.5 0 1.5.6 2.5 1.5 3-.4-2.5 0-5 .5-7.5z"/></svg>');
+      div.querySelector("h3").insertAdjacentHTML("afterbegin", MapPage.ring(true));
       div.insertAdjacentHTML("afterbegin", `<span class="embers" aria-hidden="true">${"<i></i>".repeat(9)}</span>`);
     }
     div.querySelector(".topics").textContent = m.topics.map((t) => t.name).join(" · ");
