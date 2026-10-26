@@ -2,8 +2,8 @@
 // subject/topic pickers, and the side panel a click fills in (the app would open the tutor here).
 (function () {
   const STYLES = [
-    { file: "outline.html", name: "Outline", short: "Outline", group: "Text", hint: "A fold-out list. The arrow beside a concept opens its details." },
     { file: "cards.html", name: "Cards", short: "Cards", group: "Text", hint: "One card per subtopic, concepts as chips. A chip marked + opens its details." },
+    { file: "outline.html", name: "Outline", short: "Outline", group: "Text", hint: "A fold-out list. The arrow beside a concept opens its details." },
     { file: "markmap.html", name: "Tree map", short: "Tree", group: "Map", hint: "The small circles fold and unfold branches. Drag to move; scroll or pinch to zoom." },
     { file: "jsmind.html", name: "Box map", short: "Box", group: "Map", hint: "The small circles fold and unfold branches. Drag to move around; scroll or pinch to zoom." },
     { file: "radial.html", name: "Radial map", short: "Radial", group: "Map", hint: "Topic in the middle, subtopics around it, concepts on the outer ring. A hollow dot opens details. Drag to move; scroll or pinch to zoom." },
