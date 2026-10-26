@@ -6,7 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%232f6f6a%27/%3E%3C/svg%3E">
 <title>StudyOS preview</title>
 <meta name="description" content="What StudyOS is, and five ways to see a course at a glance: an early preview shared for feedback.">
-<link rel="stylesheet" href="common.css?v=202610262355">
+<link rel="stylesheet" href="common.css?v=202610262358">
 <style>
   body { height: auto; display: block; }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1120px; margin: 0 auto; padding: 18px 20px; }
@@ -96,26 +96,31 @@
   .subject { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; padding: 18px 4px; border-bottom: 1px solid var(--line); }
   .subject h3 { margin: 0; font-size: 18px; }
 
-  /* The Book of Five Rings: a smouldering row with a flickering flame and rising embers */
-  .subject.fire { --fire: #b8461a; --fire-glow: rgba(232, 104, 36, 0.35); --ember: #e8661f; position: relative; overflow: hidden; isolation: isolate; margin: 8px -12px; padding: 20px 16px; border-radius: 14px; border-bottom-color: transparent; background: radial-gradient(120% 140% at 0% 100%, rgba(255, 128, 48, 0.16), transparent 60%), var(--panel); box-shadow: inset 0 0 0 1px var(--fire-glow); animation: smoulder 4.5s ease-in-out infinite; }
-  @media (prefers-color-scheme: dark) { .subject.fire { --fire: #ff9a52; --fire-glow: rgba(255, 140, 60, 0.4); --ember: #ffae5c; background: radial-gradient(120% 140% at 0% 100%, rgba(255, 110, 40, 0.20), transparent 60%), var(--panel); } }
+  /* The Book of Five Rings: the row's glow, border and title cycle through the five elements,
+     and motes of each element drift in their own way (earth dust, water drops, fire embers, wind wisps, void sparks). */
+  @property --glow { syntax: "<color>"; inherits: true; initial-value: #f07426; }
+  .subject.fire { --e1: #9a7847; --e2: #2f7f8a; --e3: #c4541a; --e4: #66707a; --e5: #4b3f9e; position: relative; overflow: hidden; isolation: isolate; margin: 8px -12px; padding: 20px 16px; border-radius: 14px; border-bottom-color: transparent;
+    background: radial-gradient(120% 140% at 0% 100%, color-mix(in srgb, var(--glow) 16%, transparent), transparent 60%), var(--panel);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glow) 60%, transparent), 0 8px 28px color-mix(in srgb, var(--glow) 16%, transparent);
+    animation: row-elements 12.5s ease-in-out infinite; }
+  @media (prefers-color-scheme: dark) { .subject.fire { --e1: #d9a35c; --e2: #4cc3d4; --e3: #ff8a2a; --e4: #c9d3de; --e5: #9d8fff; } }
+  @keyframes row-elements { 0%, 100% { --glow: var(--e1); } 20% { --glow: var(--e2); } 40% { --glow: var(--e3); } 60% { --glow: var(--e4); } 80% { --glow: var(--e5); } }
   .subject.fire > *:not(.embers) { position: relative; z-index: 1; }
-  .subject.fire h3 { color: var(--fire); display: flex; align-items: center; gap: 10px; }
+  .subject.fire h3 { color: var(--glow); display: flex; align-items: center; gap: 10px; }
   .subject.fire h3 .ring { width: 46px; height: 46px; margin: -6px 0; }
   .embers { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-  .embers i { position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 6px 1px var(--ember); opacity: 0; animation: rise 4.2s linear infinite; }
-  .embers i:nth-child(1) { left: 4%; animation-delay: 0s; }
-  .embers i:nth-child(2) { left: 11%; animation-delay: 1.3s; animation-duration: 3.6s; }
-  .embers i:nth-child(3) { left: 19%; animation-delay: 2.4s; width: 3px; height: 3px; }
-  .embers i:nth-child(4) { left: 27%; animation-delay: 0.7s; animation-duration: 5s; }
-  .embers i:nth-child(5) { left: 36%; animation-delay: 3.1s; width: 3px; height: 3px; }
-  .embers i:nth-child(6) { left: 45%; animation-delay: 1.9s; animation-duration: 3.8s; }
-  .embers i:nth-child(7) { left: 55%; animation-delay: 0.4s; animation-duration: 4.8s; width: 3px; height: 3px; }
-  .embers i:nth-child(8) { left: 66%; animation-delay: 2.8s; }
-  .embers i:nth-child(9) { left: 78%; animation-delay: 1.6s; animation-duration: 5.2s; width: 3px; height: 3px; }
-  @keyframes smoulder { 0%, 100% { box-shadow: inset 0 0 0 1px var(--fire-glow), 0 4px 18px rgba(255, 100, 30, 0.06); } 50% { box-shadow: inset 0 0 0 1px var(--ember), 0 8px 30px rgba(255, 100, 30, 0.2); } }
+  .embers i { position: absolute; opacity: 0; }
+  .embers .m-fire { bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: #ff8a2a; box-shadow: 0 0 6px 1px #ff8a2a; animation: rise 4.2s linear infinite; }
+  .embers .m-earth { bottom: -4px; width: 4px; height: 3px; border-radius: 1px; background: #c09356; animation: dust 6.5s ease-in-out infinite; }
+  .embers .m-water { bottom: -6px; width: 5px; height: 5px; border-radius: 50% 0 50% 50%; transform: rotate(-45deg); background: #4cc3d4; box-shadow: 0 0 5px #4cc3d4; animation: drop 5.2s ease-in-out infinite; }
+  .embers .m-wind { width: 18px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, #c9d3de, transparent); animation: gust 3.6s ease-in-out infinite; }
+  .embers .m-void { width: 5px; height: 5px; border-radius: 50%; background: #9d8fff; box-shadow: 0 0 8px 2px #8b7bff; animation: twinkle 4.4s ease-in-out infinite; }
   @keyframes rise { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: 0.9; } 70% { opacity: 0.6; } 100% { transform: translate(14px, -90px) scale(0.4); opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .subject.fire, .flame, .flame .inner, .embers i { animation: none !important; } .embers { display: none; } }
+  @keyframes dust { 0% { transform: translate(0, 0) rotate(0deg); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translate(-10px, -50px) rotate(160deg); opacity: 0; } }
+  @keyframes drop { 0% { transform: translate(0, 0) rotate(-45deg); opacity: 0; } 15% { opacity: 0.85; } 50% { transform: translate(8px, -40px) rotate(-45deg); } 100% { transform: translate(-4px, -80px) rotate(-45deg); opacity: 0; } }
+  @keyframes gust { 0% { transform: translateX(-30px) scaleX(0.4); opacity: 0; } 30% { opacity: 0.8; } 100% { transform: translateX(140px) scaleX(1.2); opacity: 0; } }
+  @keyframes twinkle { 0%, 100% { transform: scale(0.3); opacity: 0; } 45% { transform: scale(1.1); opacity: 0.9; } 60% { transform: scale(0.8); opacity: 0.6; } }
+  @media (prefers-reduced-motion: reduce) { .subject.fire { animation: none !important; } .embers { display: none; } }
   .subject .meta { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
   .subject .topics { grid-column: 1; color: var(--muted); font-size: 14px; line-height: 1.5; margin: 4px 0 0; }
   .subject .links { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 430px; }
@@ -234,8 +239,8 @@
 
   <p class="foot">The trees were built automatically by an AI reading the original course files, so some wording or grouping may be off; that's part of what's being tested. Best on a laptop, but it works on a phone. Nothing you do here is sent anywhere or tracked; your browser only remembers that you've seen the tips.</p>
 </main>
-<script src="data.js?v=202610262355"></script>
-<script src="common.js?v=202610262355"></script>
+<script src="data.js?v=202610262358"></script>
+<script src="common.js?v=202610262358"></script>
 <script>
   const TEXT = {
     "outline.html": "A fold-out list with a one-line explanation under each subtopic. The plainest and most compact.",
@@ -264,7 +269,13 @@
     div.querySelector("h3").textContent = m.subject;
     if (slug === "five-rings") {
       div.querySelector("h3").insertAdjacentHTML("afterbegin", MapPage.ring(true));
-      div.insertAdjacentHTML("afterbegin", `<span class="embers" aria-hidden="true">${"<i></i>".repeat(9)}</span>`);
+      // Fifteen motes, three per element, spread across the row with staggered timing.
+      const motes = ["earth", "water", "fire", "wind", "void"].flatMap((k, e) => [0, 1, 2].map((n) => {
+        const i = e * 3 + n, left = (i * 37) % 92 + 2, delay = ((i * 1.7) % 6).toFixed(1), top = 15 + (i * 23) % 70;
+        const pos = k === "wind" || k === "void" ? `top:${top}%;left:${k === "wind" ? -5 + (i * 11) % 40 : left}%` : `left:${left}%`;
+        return `<i class="m-${k}" style="${pos};animation-delay:${delay}s"></i>`;
+      })).join("");
+      div.insertAdjacentHTML("afterbegin", `<span class="embers" aria-hidden="true">${motes}</span>`);
     }
     div.querySelector(".topics").textContent = m.topics.map((t) => t.name).join(" · ");
     list.append(div);
