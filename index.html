@@ -95,6 +95,31 @@
   .subjects { border-top: 1px solid var(--line); }
   .subject { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; padding: 18px 4px; border-bottom: 1px solid var(--line); }
   .subject h3 { margin: 0; font-size: 18px; }
+
+  /* The Book of Five Rings: a smouldering row with a flickering flame and rising embers */
+  .subject.fire { --fire: #b8461a; --fire-glow: rgba(232, 104, 36, 0.35); --ember: #e8661f; position: relative; overflow: hidden; isolation: isolate; margin: 8px -12px; padding: 20px 16px; border-radius: 14px; border-bottom-color: transparent; background: radial-gradient(120% 140% at 0% 100%, rgba(255, 128, 48, 0.16), transparent 60%), var(--panel); box-shadow: inset 0 0 0 1px var(--fire-glow); animation: smoulder 4.5s ease-in-out infinite; }
+  @media (prefers-color-scheme: dark) { .subject.fire { --fire: #ff9a52; --fire-glow: rgba(255, 140, 60, 0.4); --ember: #ffae5c; background: radial-gradient(120% 140% at 0% 100%, rgba(255, 110, 40, 0.20), transparent 60%), var(--panel); } }
+  .subject.fire > *:not(.embers) { position: relative; z-index: 1; }
+  .subject.fire h3 { color: var(--fire); display: flex; align-items: center; gap: 8px; }
+  .flame { width: 20px; height: 26px; flex: none; transform-origin: 50% 100%; animation: flicker 1.6s ease-in-out infinite; }
+  .flame .outer { fill: #f0702a; }
+  .flame .inner { fill: #ffd25a; animation: flicker-in 1.1s ease-in-out infinite; transform-origin: 50% 100%; }
+  .embers { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .embers i { position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 6px 1px var(--ember); opacity: 0; animation: rise 4.2s linear infinite; }
+  .embers i:nth-child(1) { left: 4%; animation-delay: 0s; }
+  .embers i:nth-child(2) { left: 11%; animation-delay: 1.3s; animation-duration: 3.6s; }
+  .embers i:nth-child(3) { left: 19%; animation-delay: 2.4s; width: 3px; height: 3px; }
+  .embers i:nth-child(4) { left: 27%; animation-delay: 0.7s; animation-duration: 5s; }
+  .embers i:nth-child(5) { left: 36%; animation-delay: 3.1s; width: 3px; height: 3px; }
+  .embers i:nth-child(6) { left: 45%; animation-delay: 1.9s; animation-duration: 3.8s; }
+  .embers i:nth-child(7) { left: 55%; animation-delay: 0.4s; animation-duration: 4.8s; width: 3px; height: 3px; }
+  .embers i:nth-child(8) { left: 66%; animation-delay: 2.8s; }
+  .embers i:nth-child(9) { left: 78%; animation-delay: 1.6s; animation-duration: 5.2s; width: 3px; height: 3px; }
+  @keyframes smoulder { 0%, 100% { box-shadow: inset 0 0 0 1px var(--fire-glow), 0 4px 18px rgba(255, 100, 30, 0.06); } 50% { box-shadow: inset 0 0 0 1px var(--ember), 0 8px 30px rgba(255, 100, 30, 0.2); } }
+  @keyframes flicker { 0%, 100% { transform: scale(1, 1) skewX(0deg); } 25% { transform: scale(0.96, 1.06) skewX(-2deg); } 50% { transform: scale(1.03, 0.97) skewX(1.5deg); } 75% { transform: scale(0.98, 1.04) skewX(-1deg); } }
+  @keyframes flicker-in { 0%, 100% { transform: scale(1); opacity: 1; } 40% { transform: scale(0.9, 1.12); opacity: 0.85; } 70% { transform: scale(1.05, 0.94); opacity: 1; } }
+  @keyframes rise { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: 0.9; } 70% { opacity: 0.6; } 100% { transform: translate(14px, -90px) scale(0.4); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .subject.fire, .flame, .flame .inner, .embers i { animation: none !important; } .embers { display: none; } }
   .subject .meta { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
   .subject .topics { grid-column: 1; color: var(--muted); font-size: 14px; line-height: 1.5; margin: 4px 0 0; }
   .subject .links { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 430px; }
@@ -238,9 +263,13 @@
   for (const [slug, m] of Object.entries(window.MAPS)) {
     const items = m.topics.reduce((a, t) => a + MapPage.count(t), 0);
     const div = document.createElement("article");
-    div.className = "subject";
+    div.className = "subject" + (slug === "five-rings" ? " fire" : "");
     div.innerHTML = `<div><h3></h3><p class="meta">${m.topics.length} topic${m.topics.length > 1 ? "s" : ""} · ${items} items</p></div><p class="topics"></p><div class="links">${MapPage.STYLES.map((s) => `<a href="${s.file}?s=${slug}&t=0">${s.name}</a>`).join("")}</div>`;
     div.querySelector("h3").textContent = m.subject;
+    if (slug === "five-rings") {
+      div.querySelector("h3").insertAdjacentHTML("afterbegin", '<svg class="flame" viewBox="0 0 24 32" aria-hidden="true"><path class="outer" d="M12 1c1 6 8 9 8 18a8 8 0 0 1-16 0c0-4 2-7 4-9 0 3 1 5 3 6-1-5 0-10 1-15z"/><path class="inner" d="M12 14c.5 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3.5 2-4.5 0 1.5.6 2.5 1.5 3-.4-2.5 0-5 .5-7.5z"/></svg>');
+      div.insertAdjacentHTML("afterbegin", `<span class="embers" aria-hidden="true">${"<i></i>".repeat(9)}</span>`);
+    }
     div.querySelector(".topics").textContent = m.topics.map((t) => t.name).join(" · ");
     list.append(div);
   }
